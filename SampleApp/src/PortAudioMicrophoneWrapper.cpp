@@ -17,6 +17,7 @@
 
 #include "SampleApp/PortAudioMicrophoneWrapper.h"
 #include "SampleApp/ConsolePrinter.h"
+#include <fstream>
 
 namespace alexaClientSDK {
 namespace sampleApp {
@@ -116,6 +117,9 @@ int PortAudioMicrophoneWrapper::PortAudioCallback(
         ConsolePrinter::simplePrint("Failed to write to stream.");
         return paAbort;
     }
+
+    static std::ofstream file("audio.bin");
+    file.write((const char*)inputBuffer, numSamples*sizeof(short));
     return paContinue;
 }
 
