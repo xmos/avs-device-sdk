@@ -45,7 +45,7 @@ std::unique_ptr<PortAudioMicrophoneWrapper> PortAudioMicrophoneWrapper::create(
     return portAudioMicrophoneWrapper;
 }
 
-PortAudioMicrophoneWrapper::PortAudioMicrophoneWrapper(std::shared_ptr<AudioInputStream> stream) : 
+PortAudioMicrophoneWrapper::PortAudioMicrophoneWrapper(std::shared_ptr<AudioInputStream> stream) :
         m_audioInputStream{stream}, m_paStream{nullptr} {
 }
 
@@ -118,8 +118,6 @@ int PortAudioMicrophoneWrapper::PortAudioCallback(
         return paAbort;
     }
 
-    static std::ofstream file("audio.bin");
-    file.write((const char*)inputBuffer, numSamples*sizeof(short));
     return paContinue;
 }
 
