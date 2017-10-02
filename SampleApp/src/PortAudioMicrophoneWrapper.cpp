@@ -44,7 +44,7 @@ std::unique_ptr<PortAudioMicrophoneWrapper> PortAudioMicrophoneWrapper::create(
     return portAudioMicrophoneWrapper;
 }
 
-PortAudioMicrophoneWrapper::PortAudioMicrophoneWrapper(std::shared_ptr<AudioInputStream> stream) : 
+PortAudioMicrophoneWrapper::PortAudioMicrophoneWrapper(std::shared_ptr<AudioInputStream> stream) :
         m_audioInputStream{stream}, m_paStream{nullptr} {
 }
 
@@ -116,6 +116,7 @@ int PortAudioMicrophoneWrapper::PortAudioCallback(
         ConsolePrinter::simplePrint("Failed to write to stream.");
         return paAbort;
     }
+
     return paContinue;
 }
 
