@@ -17,7 +17,6 @@
 
 #include "SampleApp/PortAudioMicrophoneWrapper.h"
 #include "SampleApp/ConsolePrinter.h"
-#include <fstream>
 
 namespace alexaClientSDK {
 namespace sampleApp {
