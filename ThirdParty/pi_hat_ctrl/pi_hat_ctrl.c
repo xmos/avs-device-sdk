@@ -7,7 +7,34 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <linux/i2c-dev.h>
+#include <linux/i2c.h>
+#include <stdint.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
 
+// DATA VALUES
+
+char data_0x00 = (char)0x00;
+char data_0x01 = (char)0x01;
+char data_0x04 = (char)0x04;
+char data_0x06 = (char)0x06;
+char data_0x07 = (char)0x07;
+char data_0x08 = (char)0x08;
+char data_0x0C = (char)0x0C;
+char data_0x10 = (char)0x10;
+char data_0x14 = (char)0x14;
+char data_0x20 = (char)0x20;
+char data_0x44 = (char)0x44;
+char data_0x4E = (char)0x4E;
+char data_0x80 = (char)0x80;
+char data_0x81 = (char)0x81;
+char data_0x84 = (char)0x84;
+char data_0x92 = (char)0x92;
+char data_0x94 = (char)0x94;
+char data_0xC6 = (char)0xC6;
+char data_0xD4 = (char)0xD4;
+	
 // ADRESSES
 #define IS31FL3193_ADR 0x68
 #define PCAL6416A_ADR 0x20
@@ -72,6 +99,7 @@ const char *command_SET_INT_INPUT = "SET_INT_INPUT";
 const char *command_GET_INT_N_IN = "GET_INT_N_IN";
 const char *command_SET_LED_SPEAKING = "SET_LED_SPEAKING";
 
+int file_id;
 
 typedef struct {
 	double hue;         // angle in degrees
@@ -91,7 +119,11 @@ typedef struct {
 	double lightness;   // a fraction between 0 and 1
 } hsl;
 
-
+void i2c_start(int DevId);
+void i2c_stop();
+static inline int i2c_smbus_access (int fd, char rw, uint8_t command, int size, union i2c_smbus_data *data);
+int i2c_read(int Address);
+void i2c_write(int Address, char Data[], int Size);
 void sleep_ms(unsigned milliseconds);
 void set_led_rgb (char **argv);
 rgb hsv2rgb(hsv input);
@@ -112,6 +144,49 @@ int int_input(char **argv);
 int get_int_n_in();
 void set_led_speaking();
 
+void file_open(){
+	file_id = open("/dev/i2c-1", O_RDWR);
+}
+
+void i2c_start(int DevId){
+	ioctl(file_id,I2C_SLAVE,DevId);
+}
+
+void i2c_stop(){
+	close (file_id);
+}
+
+ 
+static inline int i2c_smbus_access (int fd, char rw, uint8_t command, int size, union i2c_smbus_data *data)
+{
+  struct i2c_smbus_ioctl_data args ;
+
+  args.read_write = rw ;
+  args.command    = command ;
+  args.size       = size ;
+  args.data       = data ;
+  return ioctl (fd, I2C_SMBUS, &args) ;
+}
+
+
+int i2c_read(int Address){
+	int err;
+	int t;
+	union i2c_smbus_data data;
+	if (i2c_smbus_access (file_id, I2C_SMBUS_READ, Address, I2C_SMBUS_BYTE_DATA, &data))
+		return -1;
+	else
+		return data.byte & 0xff ;
+}
+
+ 
+void i2c_write(int Address, char Data[], int Size){
+	char buf[Size + 1];
+	buf[0] = Address;
+	memcpy(&buf[1], Data, Size);
+	write(file_id, buf, Size + 1);
+}
+
 
 void sleep_ms(unsigned milliseconds){
 	usleep(milliseconds*1000);
@@ -119,17 +194,27 @@ void sleep_ms(unsigned milliseconds){
 
 
 void set_led_rgb (char **argv){
-	int fd = wiringPiI2CSetup(IS31FL3193_ADR);
+	
+	char IS31FL3193_data_red = (char)round((float)atof(argv[2]));
+	char IS31FL3193_data_green = (char)round((float)atof(argv[3]));
+	char IS31FL3193_data_blue = (char)round((float)atof(argv[4]));
+	
+	// Setup I2C
+	file_open();
+	i2c_start(IS31FL3193_ADR);
+	
     // Set Shutdown Register to normal operatiom // All channel enable
-    wiringPiI2CWriteReg8(fd, 0x00, 0x20);
+    i2c_write(0x00, &data_0x20, 1);  
     // Set current Setting Register 0x03 to its minimum value (5 mA)
-    wiringPiI2CWriteReg8(fd, 0x03, 0x10);
-    // Set PWM register (OUT1-OUT3)
-    wiringPiI2CWriteReg8(fd, 0x04, (int)round((float)atof(argv[2]))); // Red
-    wiringPiI2CWriteReg8(fd, 0x05, (int)round((float)atof(argv[3]))); // Green
-    wiringPiI2CWriteReg8(fd, 0x06, (int)round((float)atof(argv[4]))); // Blue
-
-    wiringPiI2CWriteReg8(fd, 0x07, 0x00);
+    i2c_write(0x03, &data_0x10, 1);
+    // Set PWM register (OUT1-OUT3)  
+    i2c_write(0x04, &IS31FL3193_data_red, 1);
+    i2c_write(0x05, &IS31FL3193_data_green, 1);
+    i2c_write(0x06, &IS31FL3193_data_blue, 1);
+    // Update Register
+	i2c_write(0x07, &data_0x00, 1);
+	
+	i2c_stop();
 }
 
 
@@ -171,39 +256,40 @@ rgb hsv2rgb(hsv input){
    	out.red = out.red + m;
 	out.green = out.green + m;
 	out.blue = out.blue + m;
-
+	
     return out;
 }
 
 
 void set_led_hsv (hsv input){
 	rgb rgb_res = hsv2rgb(input);
-	int fd = wiringPiI2CSetup(IS31FL3193_ADR);
-
-	// Set Shutdown Register to normal operatiom // All channel enable
-    wiringPiI2CWriteReg8(fd, 0x00, 0x20);
-
+	char IS31FL3193_data_red = (char)round((rgb_res.red)*255);
+	char IS31FL3193_data_green = (char)round((rgb_res.green)*255);
+	char IS31FL3193_data_blue = (char)round((rgb_res.blue)*255);
+	
+	// Setup I2C
+	file_open();
+	i2c_start(IS31FL3193_ADR);
+	// Set Shutdown Register 0x00 to normal operatiom // All channel enable
+    i2c_write(0x00, &data_0x20, 1);
 	// Set current Setting Register 0x03 to its minimum value (5 mA)
-    wiringPiI2CWriteReg8(fd, 0x03, 0x10);
-
+    i2c_write(0x03, &data_0x10, 1);
 	// Conversion from HSV to RGB
 	// Set PWM register (OUT1-OUT3)
-    wiringPiI2CWriteReg8(fd, 0x04, (int)round((rgb_res.red)*255)); // Red
-    wiringPiI2CWriteReg8(fd, 0x05, (int)round((rgb_res.green)*255)); // Green
-    wiringPiI2CWriteReg8(fd, 0x06, (int)round((rgb_res.blue)*255)); // Blue
-    printf("%d \n", (int)round((rgb_res.red)*255));
-	printf("%d \n", (int)round((rgb_res.green)*255));
-	printf("%d \n", (int)round((rgb_res.blue)*255));
-
+	i2c_write(0x04, &IS31FL3193_data_red, 1);
+	i2c_write(0x05, &IS31FL3193_data_green, 1);
+	i2c_write(0x06, &IS31FL3193_data_blue, 1);
     // Update the register
-    wiringPiI2CWriteReg8(fd, 0x07, 0x00);
+    i2c_write(0x07, &data_0x00, 1);
+    
+    i2c_stop();
 }
 
 
 void parse_led_hsv (char **argv){
 	// H (argv[2]) between 0 and 360, S (argv[3]) between 0 and 1, V (argv[4]) between 0 and 1
 	hsv input;
-	input.hue =  strtod(argv[2], NULL);
+	input.hue = strtod(argv[2], NULL);
 	input.saturation =  strtod(argv[3], NULL);
 	input.value =  strtod(argv[4], NULL);
 	set_led_hsv(input);
@@ -252,26 +338,29 @@ rgb hsl2rgb(hsl input){
     return out;
 }
 
-
 void set_led_hsl (hsl input){
 	rgb rgb_res = hsl2rgb(input);
-	int fd = wiringPiI2CSetup(IS31FL3193_ADR);
+	char IS31FL3193_data_red = (char)round((rgb_res.red)*255);
+	char IS31FL3193_data_green = (char)round((rgb_res.green)*255);
+	char IS31FL3193_data_blue = (char)round((rgb_res.blue)*255);
+	
+	// Setup I2C
+	file_open();
+	i2c_start(IS31FL3193_ADR);
 
-	// Set Shutdown Register to normal operatiom // All channel enable
-    wiringPiI2CWriteReg8(fd, 0x00, 0x20);
-
+	// Set Shutdown Register 0x00 to normal operatiom // All channel enable
+    i2c_write(0x00, &data_0x20, 1);
 	// Set current Setting Register 0x03 to its minimum value (5 mA)
-    wiringPiI2CWriteReg8(fd, 0x03, 0x10);
-
+    i2c_write(0x03, &data_0x10, 1);
+	// Conversion from HSV to RGB
 	// Set PWM register (OUT1-OUT3)
-    wiringPiI2CWriteReg8(fd, 0x04, (int)round((rgb_res.red)*255)); // Red
-    wiringPiI2CWriteReg8(fd, 0x05, (int)round((rgb_res.green)*255)); // Green
-    wiringPiI2CWriteReg8(fd, 0x06, (int)round((rgb_res.blue)*255)); // Blue
-	printf("%d \n", (int)round((rgb_res.red)*255));
-	printf("%d \n", (int)round((rgb_res.green)*255));
-	printf("%d \n", (int)round((rgb_res.blue)*255));
+	i2c_write(0x04, &IS31FL3193_data_red, 1);
+	i2c_write(0x05, &IS31FL3193_data_green, 1);
+	i2c_write(0x06, &IS31FL3193_data_blue, 1);
     // Update the register
-    wiringPiI2CWriteReg8(fd, 0x07, 0x00);
+    i2c_write(0x07, &data_0x00, 1);
+
+    i2c_stop();
 }
 
 
@@ -288,40 +377,58 @@ void parse_led_hsl (char **argv){
 // 1 - Mute the mic, 0 - Unmute the mic
 void set_mute_mic(char **argv){
 	// Setup I2C
-	int fd = wiringPiI2CSetup(PCAL6416A_ADR);
-    int read_config_reg = wiringPiI2CReadReg8(fd, PCAL6416A_config_reg);
-    if (atoi(argv[2]) == 1) { // MUTE
-		read_config_reg &= 0b11101111;
+	file_open();
+    i2c_start(PCAL6416A_ADR);
+    
+    // Read config register
+    int read_config_reg = i2c_read(PCAL6416A_config_reg);
+    if (atoi(argv[2]) == 1) { 
+		read_config_reg &= 0b11101111; // MUTE
 	}
 	else if (atoi(argv[2]) == 0) {
-		read_config_reg |= 0b00010000;
+		read_config_reg |= 0b00010000; // UNMUTE
 	}
-	wiringPiI2CWriteReg8(fd, PCAL6416A_config_reg, read_config_reg);
+	// read_config_reg int to char
+	char read_config_reg_to_char = (char)read_config_reg;
+	//Change the config register
+	i2c_write(PCAL6416A_config_reg, &read_config_reg_to_char, 1);
+	
+	i2c_stop();
 }
 
 
 // Reset the DAC with default software values + Power up the DAC
 void set_dac_reset(char **argv){
 	// Setup I2C
-	int fd = wiringPiI2CSetup(PCAL6416A_ADR);
-	int fd_TLV320DAC3101 = wiringPiI2CSetup(TLV320DAC3101_ADR);
-    int read_config_reg = wiringPiI2CReadReg8(fd, PCAL6416A_config_reg);
+	file_open();
+	i2c_start(PCAL6416A_ADR);
+
+    int read_config_reg = i2c_read(PCAL6416A_config_reg);
     if (atoi(argv[2]) == 1) { // RESET DAC with default value
 		//read_config_reg |= 0b10000000; // PIN DAC_RST_N defined as an input
 		read_config_reg &= 0b01111111; // PIN DAC_RST_N defined as an output
-		wiringPiI2CWriteReg8(fd, PCAL6416A_config_reg, read_config_reg);
-		wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_pg_ctrl_reg, 0x00); // page 0 selected
-		wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_sw_rst_reg, 0x01); // self-clearing software reset for control register
+		// read_config_reg int to char
+		char read_config_reg_to_char = (char)read_config_reg;
+		i2c_write(PCAL6416A_config_reg, &read_config_reg_to_char, 1);
+		i2c_start(TLV320DAC3101_ADR);
+		i2c_write(TLV320DAC3101_pg_ctrl_reg, &data_0x00, 1); // page 0 selected
+		i2c_write(TLV320DAC3101_sw_rst_reg, &data_0x01, 1); // self-clearing software reset for control register
 		// POWER UP DAC
-		wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_dac_dat_path_reg, 0xD4); // powerup DAC left and right channels (soft step enabled)
-		wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_dacl_vol_d_reg, 0x00); // DAC left gain
-		wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_dacr_vol_d_reg, 0x00); // DAC right gain
-		wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_dac_vol_reg, 0x00); // unmute DAC left and right channels
+		i2c_write(TLV320DAC3101_dac_dat_path_reg, &data_0xD4, 1); // powerup DAC left and right channels (soft step enabled)
+		i2c_write(TLV320DAC3101_dacl_vol_d_reg, &data_0x00, 1); // DAC left gain
+		i2c_write(TLV320DAC3101_dacr_vol_d_reg, &data_0x00, 1); // DAC right gain
+		i2c_write(TLV320DAC3101_dac_vol_reg, &data_0x00, 1); // unmute DAC left and right channels
+	
 		printf("DAC turned on (self-clearing software reset for control register and power up)\n");
+		i2c_stop();
 	}
 	else if (atoi(argv[2]) == 0) { // TURN OFF the DAC
+		i2c_start(PCAL6416A_ADR);
 		read_config_reg |= 0b10000000; // DAC turned off
+		char read_config_reg_to_char = (char)read_config_reg;
+		i2c_write(PCAL6416A_config_reg, &read_config_reg_to_char, 1);
 		printf("DAC turned off \n");
+		i2c_stop();
 	}
 }
 
@@ -329,65 +436,75 @@ void set_dac_reset(char **argv){
 // DAC initialisation + power up
 void init_dac(){
 	// Setup I2C
-	int fd_PCAL6416A = wiringPiI2CSetup(PCAL6416A_ADR);
-	int fd_TLV320DAC3101 = wiringPiI2CSetup(TLV320DAC3101_ADR);
-    int read_config_reg = wiringPiI2CReadReg8(fd_PCAL6416A, PCAL6416A_config_reg); // read config register of PCAL6416A
+	file_open();
+	i2c_start(PCAL6416A_ADR);
+	//int fd_PCAL6416A = wiringPiI2CSetup(PCAL6416A_ADR);
+	//int fd_TLV320DAC3101 = wiringPiI2CSetup(TLV320DAC3101_ADR);
+    int read_config_reg = i2c_read(PCAL6416A_config_reg); // read config register of PCAL6416A
 	read_config_reg |= 0b10000000; // PIN DAC_RST_N defined as an input
 	read_config_reg &= 0b01111111; // PIN DAC_RST_N defined as an output
 	// TIME SLEEP (0.1 sec)
-	wiringPiI2CWriteReg8(fd_PCAL6416A, PCAL6416A_config_reg, read_config_reg); // DAC turned on
+	char read_config_reg_to_char = (char)read_config_reg;
+	i2c_write(PCAL6416A_config_reg, &read_config_reg_to_char, 1);
 	// TIME SLEEP (0.1 sec)
 	// TIME SLEEP (1 sec)
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_pg_ctrl_reg, 0x00); // page 0 selected
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_sw_rst_reg, 0x01); // Initiate SW reset (PLL is powered off as part of reset)
-
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_PPL_J_reg, 0x08); // Set PLL J Value to 7
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_PPL_D_msb_reg, 0x00); // Set PLL D MSB Value to 0x00
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_PPL_D_lsb_reg, 0x00); // Set PLL D LSB Value to 0x00
+	i2c_start(TLV320DAC3101_ADR);
+	i2c_write(TLV320DAC3101_pg_ctrl_reg, &data_0x00, 1); // page 0 selected
+	i2c_write(TLV320DAC3101_sw_rst_reg, &data_0x01, 1); // Initiate SW reset (PLL is powered off as part of reset)
+	
+	i2c_write(TLV320DAC3101_PPL_J_reg, &data_0x08, 1); // Set PLL J Value to 7
+	i2c_write(TLV320DAC3101_PPL_D_msb_reg, &data_0x00, 1); // Set PLL D MSB Value to 0x00
+	i2c_write(TLV320DAC3101_PPL_D_lsb_reg, &data_0x00, 1); // Set PLL D LSB Value to 0x00
 	// TIME SLEEP (0.001 sec)
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_clk_gen_mux_reg, 0x07); // Set PLL_CLKIN = BCLK (device pin), CODEC_CLKIN = PLL_CLK (generated on chip)
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_PPL_P_R_reg, 0x94); // Set PLL P and R values and power up.
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_ndac_val_reg, 0x84); // Set NDAC clock divider to 4 and power up.
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_mdac_val_reg, 0x84); // Set MDAC clock divider to 4 and power up.
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_dosr_val_lsb_reg, 0x80); // Set OSR clock divider to 128.
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_clkout_mux_reg, 0x04); // Set CLKOUT Mux to DAC_CLK
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_clkout_m_val_reg, 0x81); // Set CLKOUT M divider to 1 and power up.
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_gpio1_io_reg, 0x10); // Set GPIO1 output to come from CLKOUT output.
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_codec_if_reg, 0x20); // Set CODEC interface mode: I2S, 24 bit, slave mode (BCLK, WCLK both inputs).
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_pg_ctrl_reg, 0x01); // Set register page to 1
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_hp_drvr_reg, 0x14); // Program common-mode voltage to mid scale 1.65V
+	i2c_write(TLV320DAC3101_clk_gen_mux_reg, &data_0x07, 1); // Set PLL_CLKIN = BCLK (device pin), CODEC_CLKIN = PLL_CLK (generated on chip)
+	i2c_write(TLV320DAC3101_PPL_P_R_reg, &data_0x94, 1); // Set PLL P and R values and power up.
+	i2c_write(TLV320DAC3101_ndac_val_reg, &data_0x84, 1); // Set NDAC clock divider to 4 and power up.
+	i2c_write(TLV320DAC3101_mdac_val_reg, &data_0x84, 1); // Set MDAC clock divider to 4 and power up.
+	i2c_write(TLV320DAC3101_dosr_val_lsb_reg, &data_0x80, 1); // Set OSR clock divider to 128.
+	i2c_write(TLV320DAC3101_clkout_mux_reg, &data_0x04, 1); // Set CLKOUT Mux to DAC_CLK
+	i2c_write(TLV320DAC3101_clkout_m_val_reg, &data_0x81, 1); // Set CLKOUT M divider to 1 and power up.
+	i2c_write(TLV320DAC3101_gpio1_io_reg, &data_0x10, 1); // Set GPIO1 output to come from CLKOUT output.
+	i2c_write(TLV320DAC3101_codec_if_reg, &data_0x20, 1); // Set CODEC interface mode: I2S, 24 bit, slave mode (BCLK, WCLK both inputs).
+	i2c_write(TLV320DAC3101_pg_ctrl_reg, &data_0x01, 1); // Set register page to 1
+	i2c_write(TLV320DAC3101_hp_drvr_reg, &data_0x14, 1); // Program common-mode voltage to mid scale 1.65V
+
 	// Program headphone-specific depop settings.
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_hp_depop_reg, 0x4E); // De-pop, Power on = 800 ms, Step time = 4 ms
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_dac_op_mix_reg, 0x44); // LDAC routed to left channel mixer amp, RDAC routed to right channel mixer amp
+	i2c_write(TLV320DAC3101_hp_depop_reg, &data_0x4E, 1); // De-pop, Power on = 800 ms, Step time = 4 ms
+	i2c_write(TLV320DAC3101_dac_op_mix_reg, &data_0x44, 1); // LDAC routed to left channel mixer amp, RDAC routed to right channel mixer amp
+
 	// Unmute and set gain of output driver
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_hpl_drvr_reg, 0x06); // Unmute HPL, set gain = 0 db
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_hpr_drvr_reg, 0x06); // Unmute HPR, set gain = 0 db
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_spkl_drvr_reg, 0x0C); // Unmute Left Class-D, set gain = 12 dB
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_spkr_drvr_reg, 0x0C); // Unmute Right Class-D, set gain = 12 dB
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_hp_drvr_reg, 0xD4); // HPL and HPR powered up
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_spk_amp_reg, 0xC6); // Power-up L and R Class-D drivers
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_hpl_vol_a_reg, 0x92); // Enable HPL output analog volume, set = -9 dB
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_hpr_vol_a_reg, 0x92); // Enable HPR output analog volume, set = -9 dB
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_spkl_vol_a_reg, 0x92); // Enable Left Class-D output analog volume, set = -9 dB
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_spkr_vol_a_reg, 0x92); // Enable Right Class-D output analog volume, set = -9 dB
+	i2c_write(TLV320DAC3101_hpl_drvr_reg, &data_0x06, 1); // Unmute HPL, set gain = 0 db
+	i2c_write(TLV320DAC3101_hpr_drvr_reg, &data_0x06, 1); // Unmute HPR, set gain = 0 db
+	i2c_write(TLV320DAC3101_spkl_drvr_reg, &data_0x0C, 1); // Unmute Left Class-D, set gain = 12 dB
+	i2c_write(TLV320DAC3101_spkr_drvr_reg, &data_0x0C, 1); // Unmute Right Class-D, set gain = 12 dB
+	i2c_write(TLV320DAC3101_hp_drvr_reg, &data_0xD4, 1); // HPL and HPR powered up
+	i2c_write(TLV320DAC3101_spk_amp_reg, &data_0xC6, 1); // Power-up L and R Class-D drivers
+	i2c_write(TLV320DAC3101_hpl_vol_a_reg, &data_0x92, 1); // Enable HPL output analog volume, set = -9 dB
+	i2c_write(TLV320DAC3101_hpr_vol_a_reg, &data_0x92, 1); // Enable HPR output analog volume, set = -9 dB
+	i2c_write(TLV320DAC3101_spkl_vol_a_reg, &data_0x92, 1); // Enable Left Class-D output analog volume, set = -9 dB
+	i2c_write(TLV320DAC3101_spkr_vol_a_reg, &data_0x92, 1); // Enable Right Class-D output analog volume, set = -9 dB
+
 	// TIME SLEEP (0.1 sec)
 	// Power up DAC
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_pg_ctrl_reg, 0x00); // Set register page to 0
+	i2c_write(TLV320DAC3101_pg_ctrl_reg, &data_0x00, 1); // Set register page to 0
 	// Power up DAC channels and set digital gain
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_dac_dat_path_reg, 0xD4); // Powerup DAC left and right channels (soft step enabled)
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_dacl_vol_d_reg, 0x00); // DAC Left gain = 0dB
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_dacr_vol_d_reg, 0x00); // DAC Right gain = 0dB
-	wiringPiI2CWriteReg8(fd_TLV320DAC3101, TLV320DAC3101_dac_vol_reg, 0x00); // Unmute DAC left and right channels
+	i2c_write(TLV320DAC3101_dac_dat_path_reg, &data_0xD4, 1); // Powerup DAC left and right channels (soft step enabled)
+	i2c_write(TLV320DAC3101_dacl_vol_d_reg, &data_0x00, 1); // DAC Left gain = 0dB
+	i2c_write(TLV320DAC3101_dacr_vol_d_reg, &data_0x00, 1); // DAC Right gain = 0dB
+	i2c_write(TLV320DAC3101_dac_vol_reg, &data_0x00, 1); // Unmute DAC left and right channels
 
 	printf("DAC init. done \n");
+	
+	i2c_stop();
 }
 
 
 // Get the BUT_MUTE value (0 = pushed, 1 = not pushed)
 int get_button_mute(){
 	// Setup I2C
-    int fd_PCAL6416A = wiringPiI2CSetup(PCAL6416A_ADR);
-    int read_input_port_reg_pair = wiringPiI2CReadReg8(fd_PCAL6416A, PCAL6416A_input_port_reg_pair);
+	file_open();
+	i2c_start(PCAL6416A_ADR);
+    int read_input_port_reg_pair = i2c_read(PCAL6416A_input_port_reg_pair);
 	if (read_input_port_reg_pair % 2 == 0) {
 		printf("0 \n");
 		return 0;
@@ -402,8 +519,9 @@ int get_button_mute(){
 // Get the BUT_VOL_DN value (0 = pushed, 1 = not pushed)
 int get_button_vol_dwn(){
 	// Setup I2C
-    int fd_PCAL6416A = wiringPiI2CSetup(PCAL6416A_ADR);
-    int read_input_port_reg_pair = wiringPiI2CReadReg8(fd_PCAL6416A, PCAL6416A_input_port_reg_pair);
+    file_open();
+	i2c_start(PCAL6416A_ADR);
+    int read_input_port_reg_pair = i2c_read(PCAL6416A_input_port_reg_pair);
 	read_input_port_reg_pair >>= 1;
 	if (read_input_port_reg_pair % 2 == 0) {
 		printf("0 \n");
@@ -419,8 +537,9 @@ int get_button_vol_dwn(){
 // Get the BUT_VOL_UP value (0 = pushed, 1 = not pushed)
 int get_button_vol_up(){
 	// Setup I2C
-    int fd_PCAL6416A = wiringPiI2CSetup(PCAL6416A_ADR);
-    int read_input_port_reg_pair = wiringPiI2CReadReg8(fd_PCAL6416A, PCAL6416A_input_port_reg_pair);
+    file_open();
+	i2c_start(PCAL6416A_ADR);
+    int read_input_port_reg_pair = i2c_read(PCAL6416A_input_port_reg_pair);
 	read_input_port_reg_pair >>= 3;
 	if (read_input_port_reg_pair % 2 == 0) {
 		printf("0 \n");
@@ -436,8 +555,9 @@ int get_button_vol_up(){
 // Get the BUT_ACTION value (0 = pushed, 1 = not pushed)
 int get_button_action(){
 	// Setup I2C
-    int fd_PCAL6416A = wiringPiI2CSetup(PCAL6416A_ADR);
-    int read_input_port_reg_pair = wiringPiI2CReadReg8(fd_PCAL6416A, PCAL6416A_input_port_reg_pair);
+    file_open();
+	i2c_start(PCAL6416A_ADR);
+    int read_input_port_reg_pair = i2c_read(PCAL6416A_input_port_reg_pair);
 	read_input_port_reg_pair >>= 2;
 	if (read_input_port_reg_pair % 2 == 0) {
 		printf("0 \n");
@@ -452,26 +572,30 @@ int get_button_action(){
 
 // Set boot sel as an output, 1 - PIN up, 0 PIN ground
 int boot_sel(char **argv){
-	// Setup I2C
-	int T;
 	int read_output_port_reg;
-    int fd_PCAL6416A = wiringPiI2CSetup(PCAL6416A_ADR);
+	// Setup I2C
+	file_open();
+	i2c_start(PCAL6416A_ADR);
+
     // PIN P1_0 as an output
-    int read_config_reg2 = wiringPiI2CReadReg8(fd_PCAL6416A, PCAL6416A_config_reg2); // read 2nd config register of PCAL6416A
+    int read_config_reg2 = i2c_read(PCAL6416A_config_reg2); // read 2nd config register of PCAL6416A
 	read_config_reg2 &= 0b11111110; // PIN DAC_RST_N defined as an output
-	wiringPiI2CWriteReg8(fd_PCAL6416A, PCAL6416A_config_reg2, read_config_reg2); // PIN P1_0 as an output
+	char read_config_reg2_to_char = (char)read_config_reg2;
+	i2c_write(PCAL6416A_config_reg2, &read_config_reg2_to_char, 1);
 	if (atoi(argv[2]) == 1) {
-		read_output_port_reg = wiringPiI2CReadReg8(fd_PCAL6416A, PCAL6416A_output_port_reg2); // read config register of PCAL6416A
+		read_output_port_reg = i2c_read(PCAL6416A_output_port_reg2); // read config register of PCAL6416A
 		read_output_port_reg |= 0b00000001;
-		T = wiringPiI2CWriteReg8(fd_PCAL6416A, PCAL6416A_output_port_reg2, read_output_port_reg); // PIN P1_0 up logic level
+		char read_output_port_reg_to_char = (char)read_output_port_reg;
+		i2c_write(PCAL6416A_output_port_reg2, &read_output_port_reg_to_char, 1); // PIN P1_0 up logic level
 		printf("Set BOOT_Sel pin (level up) \n");
 		printf("%d \n", read_output_port_reg);
 		return 1;
 	}
 	else if (atoi(argv[2]) == 0) {
-		read_output_port_reg = wiringPiI2CReadReg8(fd_PCAL6416A, PCAL6416A_output_port_reg2); // read config register of PCAL6416A
+		read_output_port_reg = i2c_read(PCAL6416A_output_port_reg2); // read config register of PCAL6416A
 		read_output_port_reg &= 0b11111110;
-		T = wiringPiI2CWriteReg8(fd_PCAL6416A, PCAL6416A_output_port_reg2, read_output_port_reg); // PIN P1_0 up logic level
+		char read_output_port_reg_to_char = (char)read_output_port_reg;
+		i2c_write(PCAL6416A_output_port_reg2, &read_output_port_reg_to_char, 1); // PIN P1_0 up logic level
 		printf("Set BOOT_Sel pin (level down) \n");
 		printf("%d \n", read_output_port_reg);
 		return 0;
@@ -485,22 +609,28 @@ int int_input(char **argv){
 	int T;
 	int read_int_mask_port0_reg;
     int fd_PCAL6416A = wiringPiI2CSetup(PCAL6416A_ADR);
+    // Setup I2C
+	file_open();
+	i2c_start(PCAL6416A_ADR);
     // PIN P1_0 as an output
-    int read_config_reg = wiringPiI2CReadReg8(fd_PCAL6416A, PCAL6416A_config_reg); // read first config register of PCAL6416A
+    int read_config_reg = i2c_read(PCAL6416A_config_reg);  // read first config register of PCAL6416A
 	read_config_reg |= 0b01011111; // Calculation to put PIN P0_0, P0_1, P0_2, P0_3, P0_4, P0_6  as inputs
-	wiringPiI2CWriteReg8(fd_PCAL6416A, PCAL6416A_config_reg, read_config_reg); // Write in config register to put PIN P0_0, P0_1, P0_2, P0_3, P0_4, P0_6 as inputs
+	char read_config_reg_to_char = (char)read_config_reg;
+	i2c_write(PCAL6416A_config_reg, &read_config_reg_to_char, 1); // Write in config register to put PIN P0_0, P0_1, P0_2, P0_3, P0_4, P0_6 as inputs
 	if (atoi(argv[2]) == 1) { // Enable (set) interrupts for PIN P0_0, P0_1, P0_2, P0_3, P0_4, P0_6 defined as inputs
-		read_int_mask_port0_reg = wiringPiI2CReadReg8(fd_PCAL6416A, PCAL6416A_int_mask_port0_reg); // read config register of PCAL6416A
+		int read_int_mask_port0_reg = i2c_read(PCAL6416A_int_mask_port0_reg); // read config register of PCAL6416A
 		read_int_mask_port0_reg &= 0b10100000;
-		T = wiringPiI2CWriteReg8(fd_PCAL6416A, PCAL6416A_int_mask_port0_reg, read_int_mask_port0_reg); // PIN P1_0 up logic level
+		char read_int_mask_port0_reg_to_char = (char)read_int_mask_port0_reg;
+		i2c_write(PCAL6416A_int_mask_port0_reg, &read_int_mask_port0_reg_to_char, 1); 
 		printf("Enable interrupts for PIN P0_0, P0_1, P0_2, P0_3, P0_4, P0_6 defined as inputs \n");
 		printf("%d \n", read_int_mask_port0_reg);
 		return 1;
 	}
 	else if (atoi(argv[2]) == 0) {
-		read_int_mask_port0_reg = wiringPiI2CReadReg8(fd_PCAL6416A, PCAL6416A_output_port_reg2); // read config register of PCAL6416A
+		int read_int_mask_port0_reg = i2c_read(PCAL6416A_int_mask_port0_reg); // read first mask register of PCAL6416A
 		read_int_mask_port0_reg |= 0b01011111;
-		T = wiringPiI2CWriteReg8(fd_PCAL6416A, PCAL6416A_int_mask_port0_reg, read_int_mask_port0_reg); // PIN P1_0 up logic level
+		char read_int_mask_port0_reg_to_char = (char)read_int_mask_port0_reg;
+		i2c_write(PCAL6416A_int_mask_port0_reg, &read_int_mask_port0_reg_to_char, 1);
 		printf("Disable interrupts for PIN P0_0, P0_1, P0_2, P0_3, P0_4, P0_6 defined as inputs \n");
 		printf("%d \n", read_int_mask_port0_reg);
 		return 0;
@@ -511,8 +641,9 @@ int int_input(char **argv){
 // Get the value of pin P0_6 (name : INT_N_IN) on I2C expander defined as an input.
 int get_int_n_in(){
 	// Setup I2C
-    int fd_PCAL6416A = wiringPiI2CSetup(PCAL6416A_ADR);
-    int read_input_port_reg_pair = wiringPiI2CReadReg8(fd_PCAL6416A, PCAL6416A_input_port_reg_pair);
+	file_open();
+	i2c_start(PCAL6416A_ADR);
+    int read_input_port_reg_pair = i2c_read(PCAL6416A_input_port_reg_pair);
 	read_input_port_reg_pair >>= 6;
 	if (read_input_port_reg_pair % 2 == 0) {
 		printf("0 \n");
@@ -531,26 +662,29 @@ void set_led_speaking(){
 	rgb rgb_res;
 
 	double int_coef = 10;
-    	
-    double hsv_XMOS_dark_blue__h = 199;
+	double hsv_XMOS_dark_blue__h = 199;
     double hsv_XMOS_dark_blue__s = 0.95;
-    double hsv_XMOS_dark_blue__v = 0.2;
+    double hsv_XMOS_dark_blue__v = 0.863;
     double hsv_XMOS_light_blue__h = 198;
-    double hsv_XMOS_light_blue__s = 0.6;
+    double hsv_XMOS_light_blue__s = 0.726;
     double hsv_XMOS_light_blue__v = 0.945;
-    double hsv_XMOS_light_green__h = 72;
+    double hsv_XMOS_light_green__h = 73;
     double hsv_XMOS_light_green__s = 0.892;
-    double hsv_XMOS_light_green__v = 0.99;
+    double hsv_XMOS_light_green__v = 0.91;
     double hsv_XMOS_dark_green__h = 78;
-    double hsv_XMOS_dark_green__s = 0.999;
-    double hsv_XMOS_dark_green__v = 0.2;
-
-    // SETUP I2C
-    int fd = wiringPiI2CSetup(IS31FL3193_ADR);
+    double hsv_XMOS_dark_green__s = 0.995;
+    double hsv_XMOS_dark_green__v = 0.859;
+	
+	int fd = wiringPiI2CSetup(IS31FL3193_ADR);
+	
+	// Setup I2C
+	file_open();
+	i2c_start(IS31FL3193_ADR);
     // Set Shutdown Register to normal operatiom // All channel enable
-    wiringPiI2CWriteReg8(fd, 0x00, 0x20);
+    i2c_write(0x00, &data_0x20, 1);  
     // Set current Setting Register 0x03 to its minimum value (5 mA)
-    wiringPiI2CWriteReg8(fd, 0x03, 0x10);
+    i2c_write(0x03, &data_0x10, 1);
+ 
     // Set PWM register (OUT1-OUT3)
 
     for (int j = 0; j<=2; j++) {
@@ -560,15 +694,17 @@ void set_led_speaking(){
 			input.hue = (hsv_XMOS_light_blue__h - hsv_XMOS_dark_blue__h) * ((double)fraction)/(LED_TRANSITIONS-1) + hsv_XMOS_dark_blue__h;
 			input.saturation = (hsv_XMOS_light_blue__s - hsv_XMOS_dark_blue__s) * ((double)fraction)/(LED_TRANSITIONS-1) + hsv_XMOS_dark_blue__s;
 			input.value = (hsv_XMOS_light_blue__v - hsv_XMOS_dark_blue__v) * ((double)fraction)/(LED_TRANSITIONS-1) + hsv_XMOS_dark_blue__v;
-			//
 			// CONVERSION HSV TO RGB
 			rgb_res = hsv2rgb(input);
 			// WRITING VALUES TO REGISTERS
-			wiringPiI2CWriteReg8(fd, 0x04, (int)round((rgb_res.red)*255/int_coef)); // Red
-			wiringPiI2CWriteReg8(fd, 0x05, (int)round((rgb_res.green)*255/int_coef)); // Green
-			wiringPiI2CWriteReg8(fd, 0x06, (int)round((rgb_res.blue)*255/int_coef)); // Blue
+			char rgb_res_red_to_char = (char)(int)round((rgb_res.red)*255/int_coef);
+			char rgb_res_green_to_char = (char)(int)round((rgb_res.green)*255/int_coef);
+			char rgb_res_blue_to_char = (char)(int)round((rgb_res.blue)*255/int_coef);	
+			i2c_write(0x04, &rgb_res_red_to_char, 1);
+			i2c_write(0x05, &rgb_res_green_to_char, 1);
+			i2c_write(0x06, &rgb_res_blue_to_char, 1);
 			// Update the register
-			wiringPiI2CWriteReg8(fd, 0x07, 0x00);
+			i2c_write(0x07, &data_0x00, 1);
 			sleep_ms(10);
 		}
 		for (unsigned fraction = 0 ; fraction < LED_TRANSITIONS ; ++fraction ) {
@@ -577,15 +713,17 @@ void set_led_speaking(){
 			input.hue = (hsv_XMOS_light_green__h - hsv_XMOS_light_blue__h) * ((double)fraction)/(LED_TRANSITIONS-1) + hsv_XMOS_light_blue__h;
 			input.saturation = (hsv_XMOS_light_green__s - hsv_XMOS_light_blue__s) * ((double)fraction)/(LED_TRANSITIONS-1) + hsv_XMOS_light_blue__s;
 			input.value = (hsv_XMOS_light_green__v - hsv_XMOS_light_blue__v) * ((double)fraction)/(LED_TRANSITIONS-1) + hsv_XMOS_light_blue__v;
-			//
 			// CONVERSION HSV TO RGB
 			rgb_res = hsv2rgb(input);
 			// WRITING VALUES TO REGISTERS
-			wiringPiI2CWriteReg8(fd, 0x04, (int)round((rgb_res.red)*255/int_coef)); // Red
-			wiringPiI2CWriteReg8(fd, 0x05, (int)round((rgb_res.green)*255/int_coef)); // Green
-			wiringPiI2CWriteReg8(fd, 0x06, (int)round((rgb_res.blue)*255/int_coef)); // Blue
+			char rgb_res_red_to_char = (char)(int)round((rgb_res.red)*255/int_coef);
+			char rgb_res_green_to_char = (char)(int)round((rgb_res.green)*255/int_coef);
+			char rgb_res_blue_to_char = (char)(int)round((rgb_res.blue)*255/int_coef);	
+			i2c_write(0x04, &rgb_res_red_to_char, 1);
+			i2c_write(0x05, &rgb_res_green_to_char, 1);
+			i2c_write(0x06, &rgb_res_blue_to_char, 1);
 			// Update the register
-			wiringPiI2CWriteReg8(fd, 0x07, 0x00);
+			i2c_write(0x07, &data_0x00, 1);
 			sleep_ms(10);
 	}
 		for (unsigned fraction = 0 ; fraction < LED_TRANSITIONS ; ++fraction ) {
@@ -594,15 +732,17 @@ void set_led_speaking(){
 			input.hue = (hsv_XMOS_dark_green__h - hsv_XMOS_light_green__h) * ((double)fraction)/(LED_TRANSITIONS-1) + hsv_XMOS_light_green__h;
 			input.saturation = (hsv_XMOS_dark_green__s - hsv_XMOS_light_green__s) * ((double)fraction)/(LED_TRANSITIONS-1) + hsv_XMOS_light_green__s;
 			input.value = (hsv_XMOS_dark_green__v - hsv_XMOS_light_green__v) * ((double)fraction)/(LED_TRANSITIONS-1) + hsv_XMOS_light_green__v;
-			//
 			// CONVERSION HSV TO RGB
 			rgb_res = hsv2rgb(input);
 			// WRITING VALUES TO REGISTERS
-			wiringPiI2CWriteReg8(fd, 0x04, (int)round((rgb_res.red)*255/int_coef)); // Red
-			wiringPiI2CWriteReg8(fd, 0x05, (int)round((rgb_res.green)*255/int_coef)); // Green
-			wiringPiI2CWriteReg8(fd, 0x06, (int)round((rgb_res.blue)*255/int_coef)); // Blue
+			char rgb_res_red_to_char = (char)(int)round((rgb_res.red)*255/int_coef);
+			char rgb_res_green_to_char = (char)(int)round((rgb_res.green)*255/int_coef);
+			char rgb_res_blue_to_char = (char)(int)round((rgb_res.blue)*255/int_coef);	
+			i2c_write(0x04, &rgb_res_red_to_char, 1);
+			i2c_write(0x05, &rgb_res_green_to_char, 1);
+			i2c_write(0x06, &rgb_res_blue_to_char, 1);
 			// Update the register
-			wiringPiI2CWriteReg8(fd, 0x07, 0x00);
+			i2c_write(0x07, &data_0x00, 1);
 			sleep_ms(10);
 		}
 		for (unsigned fraction = 0 ; fraction < LED_TRANSITIONS ; ++fraction ) {
@@ -611,15 +751,17 @@ void set_led_speaking(){
 			input.hue = (hsv_XMOS_dark_blue__h - hsv_XMOS_dark_green__h) * ((double)fraction)/(LED_TRANSITIONS-1) + hsv_XMOS_dark_green__h;
 			input.saturation = (hsv_XMOS_dark_blue__s - hsv_XMOS_dark_green__s) * ((double)fraction)/(LED_TRANSITIONS-1) + hsv_XMOS_dark_green__s;
 			input.value = (hsv_XMOS_dark_blue__v - hsv_XMOS_dark_green__v) * ((double)fraction)/(LED_TRANSITIONS-1) + hsv_XMOS_dark_green__v;
-
 			// CONVERSION HSV TO RGB
 			rgb_res = hsv2rgb(input);
 			// WRITING VALUES TO REGISTERS
-			wiringPiI2CWriteReg8(fd, 0x04, (int)round((rgb_res.red)*255/int_coef)); // Red
-			wiringPiI2CWriteReg8(fd, 0x05, (int)round((rgb_res.green)*255/int_coef)); // Green
-			wiringPiI2CWriteReg8(fd, 0x06, (int)round((rgb_res.blue)*255/int_coef)); // Blue
+			char rgb_res_red_to_char = (char)(int)round((rgb_res.red)*255/int_coef);
+			char rgb_res_green_to_char = (char)(int)round((rgb_res.green)*255/int_coef);
+			char rgb_res_blue_to_char = (char)(int)round((rgb_res.blue)*255/int_coef);	
+			i2c_write(0x04, &rgb_res_red_to_char, 1);
+			i2c_write(0x05, &rgb_res_green_to_char, 1);
+			i2c_write(0x06, &rgb_res_blue_to_char, 1);
 			// Update the register
-			wiringPiI2CWriteReg8(fd, 0x07, 0x00);
+			i2c_write(0x07, &data_0x00, 1);
 			sleep_ms(10);
 		}
 
