@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 #
 # Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -15,14 +15,20 @@
 # permissions and limitations under the License.
 #
 
+#
+# Modified by XMOS Ltd
+# https://github.com/xmos/avs-device-sdk
+#
+
 set -o errexit  # Exit the script if any statement fails.
 set -o nounset  # Exit the script if any uninitialized variable is used.
 
-CLONE_URL=${CLONE_URL:- 'git://github.com/alexa/avs-device-sdk.git'}
+CLONE_URL=${CLONE_URL:- 'git://github.com/lucianomartin/avs-device-sdk.git'}
 
 PORT_AUDIO_FILE="pa_stable_v190600_20161030.tgz"
 PORT_AUDIO_DOWNLOAD_URL="http://www.portaudio.com/archives/$PORT_AUDIO_FILE"
 
+TEST_MODEL_DOWNLOAD="https://github.com/Sensory/alexa-rpi/blob/master/models/spot-alexa-rpi-31000.snsr"
 
 BUILD_TESTS=${BUILD_TESTS:-'true'}
 
@@ -31,10 +37,10 @@ CURRENT_DIR="$( pwd )"
 THIS_SCRIPT="$CURRENT_DIR/setup.sh"
 popd > /dev/null
 
-INSTALL_BASE=${INSTALL_BASE:-"$HOME/sdk-folder"}
+INSTALL_BASE=${INSTALL_BASE:-"$CURRENT_DIR"}
 SOURCE_FOLDER=${SDK_LOC:-''}
 THIRD_PARTY_FOLDER=${THIRD_PARTY_LOC:-'third-party'}
-BUILD_FOLDER=${BUILD_FOLDER:-'sdk-build'}
+BUILD_FOLDER=${BUILD_FOLDER:-'build'}
 SOUNDS_FOLDER=${SOUNDS_FOLDER:-'sounds'}
 DB_FOLDER=${DB_FOLDER:-'db'}
 
@@ -52,6 +58,8 @@ TEMP_CONFIG_FILE="$BUILD_PATH/Integration/tmp_AlexaClientSDKConfig.json"
 TEST_SCRIPT="$INSTALL_BASE/test.sh"
 LIB_SUFFIX="a"
 ANDROID_CONFIG_FILE=""
+
+PI_HAT_CTRL_PATH="$THIRD_PARTY_PATH/pi_hat_ctrl"
 
 # Default device serial number if nothing is specified
 DEVICE_SERIAL_NUMBER="123456"
@@ -210,7 +218,9 @@ then
   echo "==============> INSTALLING REQUIRED TOOLS AND PACKAGE ============"
   echo
 
-  install_dependencies
+  sudo apt-get update
+  sudo apt-get -y install git gcc cmake build-essential libsqlite3-dev libcurl4-openssl-dev libfaad-dev libsoup2.4-dev libgcrypt20-dev libgstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-good libasound2-dev sox gedit vim python3-pip
+  pip install flask commentjson
 
   # create / paths
   echo
@@ -222,7 +232,17 @@ then
   mkdir -p $SOUNDS_PATH
   mkdir -p $DB_PATH
 
-  run_os_specifics
+  #get sensory and build
+  echo
+  echo "==============> CLONING AND BUILDING SENSORY =============="
+  echo
+
+  cd $THIRD_PARTY_PATH
+  git clone git://github.com/Sensory/alexa-rpi.git
+  pushd alexa-rpi > /dev/null
+  git checkout $SENSORY_MODEL_HASH -- models/spot-alexa-rpi-31000.snsr
+  popd > /dev/null
+  bash ./alexa-rpi/bin/license.sh
 
   if [ ! -d "${SOURCE_PATH}/avs-device-sdk" ]
   then
@@ -233,6 +253,16 @@ then
 
     cd $SOURCE_PATH
     git clone --single-branch $CLONE_URL avs-device-sdk
+    if [ $# -ge 1 ] && [ $1 = "xvf3510" ] ; then
+        echo
+        echo "==============> BUILDING PI HAT CONTROL =============="
+        echo
+
+        mkdir -p $PI_HAT_CTRL_PATH
+        pushd $SOURCE_PATH/avs-device-sdk/ThirdParty/pi_hat_ctrl > /dev/null
+        gcc pi_hat_ctrl.c -o $PI_HAT_CTRL_PATH/pi_hat_ctrl -lwiringPi -lm
+        popd > /dev/null
+    fi
   fi
 
   # make the SDK
@@ -242,10 +272,26 @@ then
 
   mkdir -p $BUILD_PATH
   cd $BUILD_PATH
-  cmake "$SOURCE_PATH/avs-device-sdk" \
-      -DCMAKE_BUILD_TYPE=DEBUG \
-      "${CMAKE_PLATFORM_SPECIFIC[@]}"
-
+  if [ $# -ge 1 ] && [ $1 = "xvf3510" ] ; then
+    cmake "$SOURCE_PATH/avs-device-sdk" \
+    -DSENSORY_KEY_WORD_DETECTOR=ON \
+    -DSENSORY_KEY_WORD_DETECTOR_LIB_PATH=$THIRD_PARTY_PATH/alexa-rpi/lib/libsnsr.a \
+    -DSENSORY_KEY_WORD_DETECTOR_INCLUDE_DIR=$THIRD_PARTY_PATH/alexa-rpi/include \
+    -DGSTREAMER_MEDIA_PLAYER=ON -DPORTAUDIO=ON \
+    -DPORTAUDIO_LIB_PATH="$THIRD_PARTY_PATH/portaudio/lib/.libs/libportaudio.$LIB_SUFFIX" \
+    -DPORTAUDIO_INCLUDE_DIR="$THIRD_PARTY_PATH/portaudio/include" \
+    -DCMAKE_BUILD_TYPE=DEBUG \
+    -DPI_HAT_CTRL=ON
+  else
+    cmake "$SOURCE_PATH/avs-device-sdk" \
+    -DSENSORY_KEY_WORD_DETECTOR=ON \
+    -DSENSORY_KEY_WORD_DETECTOR_LIB_PATH=$THIRD_PARTY_PATH/alexa-rpi/lib/libsnsr.a \
+    -DSENSORY_KEY_WORD_DETECTOR_INCLUDE_DIR=$THIRD_PARTY_PATH/alexa-rpi/include \
+    -DGSTREAMER_MEDIA_PLAYER=ON -DPORTAUDIO=ON \
+    -DPORTAUDIO_LIB_PATH="$THIRD_PARTY_PATH/portaudio/lib/.libs/libportaudio.$LIB_SUFFIX" \
+    -DPORTAUDIO_INCLUDE_DIR="$THIRD_PARTY_PATH/portaudio/include" \
+    -DCMAKE_BUILD_TYPE=DEBUG
+  fi
   cd $BUILD_PATH
   make SampleApp -j2
 
@@ -286,6 +332,35 @@ cat $OUTPUT_CONFIG_FILE
 generate_start_script
 
 generate_test_script
+
+if [ ! -f $ALIASES ] ; then
+echo "Create .bash_aliases file"
+cat << EOF > "$ALIASES"
+EOF
+fi
+echo "Delete any existing avs aliases and rewrite them"
+sed -i '/avsrun/d' $ALIASES > /dev/null
+sed -i '/avsunit/d' $ALIASES > /dev/null
+sed -i '/avssetup/d' $ALIASES > /dev/null
+sed -i '/avsauth/d' $ALIASES > /dev/null
+sed -i '/AVS/d' $ALIASES > /dev/null
+sed -i '/AlexaClientSDKConfig.json/d' $ALIASES > /dev/null
+sed -i '/Remove/d' $ALIASES > /dev/null
+
+echo "alias avsrun="$BUILD_PATH/SampleApp/src/SampleApp $CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models"" >> $ALIASES
+echo "alias avsunit="$TEST_SCRIPT"" >> $ALIASES
+echo "alias avssetup="$THIS_SCRIPT"" >> $ALIASES
+echo "alias avsauth="$START_AUTH_SCRIPT"" >> $ALIASES
+echo "echo "Available AVS aliases:"" >> $ALIASES
+echo "echo -e "avsrun, avsunit, avssetup, avsauth"" >> $ALIASES
+echo "echo "If authentication fails, please check $BUILD_PATH/Integration/AlexaClientSDKConfig.json"" >> $ALIASES
+echo "echo "Remove .bash_aliases and open a new terminal to remove bindings"" >> $ALIASES
+
+
+echo
+echo "==============> AUTHENTICATION =============="
+echo
+
 
 echo " **** Completed Configuration/Build ***"
 
