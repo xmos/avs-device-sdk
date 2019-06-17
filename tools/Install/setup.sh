@@ -116,7 +116,7 @@ if [[ $# -lt 1 ]]; then
     exit 1
 fi
 
-CONFIG_JSON_FILE=$1
+CONFIG_JSON_FILE="config.json"
 if [ ! -f "$CONFIG_JSON_FILE" ]; then
     echo "Config json file not found!"
     show_help
