@@ -36,10 +36,10 @@ CURRENT_DIR="$( pwd )"
 THIS_SCRIPT="$CURRENT_DIR/setup.sh"
 popd > /dev/null
 
-INSTALL_BASE=${INSTALL_BASE:-"$CURRENT_DIR"}
+INSTALL_BASE=${INSTALL_BASE:-"$HOME/sdk-folder"}
 SOURCE_FOLDER=${SDK_LOC:-''}
 THIRD_PARTY_FOLDER=${THIRD_PARTY_LOC:-'third-party'}
-BUILD_FOLDER=${BUILD_FOLDER:-'build'}
+BUILD_FOLDER=${BUILD_FOLDER:-'sdk-build'}
 SOUNDS_FOLDER=${SOUNDS_FOLDER:-'sounds'}
 DB_FOLDER=${DB_FOLDER:-'db'}
 
@@ -59,6 +59,7 @@ LIB_SUFFIX="a"
 ANDROID_CONFIG_FILE=""
 
 PI_HAT_CTRL_PATH="$THIRD_PARTY_PATH/pi_hat_ctrl"
+ALIASES="$HOME/.bash_aliases"
 
 # Default device serial number if nothing is specified
 DEVICE_SERIAL_NUMBER="123456"
@@ -285,7 +286,8 @@ cat << EOF > "$OUTPUT_CONFIG_FILE"
     },
 EOF
 
-cd $INSTALL_BASE
+#cd $INSTALL_BASE
+cd $CURRENT_DIR
 bash genConfig.sh config.json $DEVICE_SERIAL_NUMBER $CONFIG_DB_PATH $SOURCE_PATH/avs-device-sdk $TEMP_CONFIG_FILE
 
 # Delete first line from temp file to remove opening bracket
@@ -320,10 +322,10 @@ sed -i '/AVS/d' $ALIASES > /dev/null
 sed -i '/AlexaClientSDKConfig.json/d' $ALIASES > /dev/null
 sed -i '/Remove/d' $ALIASES > /dev/null
 
-echo "alias avsrun="$BUILD_PATH/SampleApp/src/SampleApp $CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models"" >> $ALIASES
+echo "alias avsrun="$BUILD_PATH/SampleApp/src/SampleApp $OUTPUT_CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models"" >> $ALIASES
 echo "alias avsunit="$TEST_SCRIPT"" >> $ALIASES
 echo "alias avssetup="$THIS_SCRIPT"" >> $ALIASES
-echo "alias avsauth="$START_AUTH_SCRIPT"" >> $ALIASES
+#echo "alias avsauth="$START_AUTH_SCRIPT"" >> $ALIASES
 echo "echo "Available AVS aliases:"" >> $ALIASES
 echo "echo -e "avsrun, avsunit, avssetup, avsauth"" >> $ALIASES
 echo "echo "If authentication fails, please check $BUILD_PATH/Integration/AlexaClientSDKConfig.json"" >> $ALIASES
