@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #
 # Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -28,7 +28,6 @@ CLONE_URL=${CLONE_URL:- 'git://github.com/lucianomartin/avs-device-sdk.git'}
 PORT_AUDIO_FILE="pa_stable_v190600_20161030.tgz"
 PORT_AUDIO_DOWNLOAD_URL="http://www.portaudio.com/archives/$PORT_AUDIO_FILE"
 
-TEST_MODEL_DOWNLOAD="https://github.com/Sensory/alexa-rpi/blob/master/models/spot-alexa-rpi-31000.snsr"
 
 BUILD_TESTS=${BUILD_TESTS:-'true'}
 
@@ -218,9 +217,7 @@ then
   echo "==============> INSTALLING REQUIRED TOOLS AND PACKAGE ============"
   echo
 
-  sudo apt-get update
-  sudo apt-get -y install git gcc cmake build-essential libsqlite3-dev libcurl4-openssl-dev libfaad-dev libsoup2.4-dev libgcrypt20-dev libgstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-good libasound2-dev sox gedit vim python3-pip
-  pip install flask commentjson
+  install_dependencies
 
   # create / paths
   echo
@@ -232,17 +229,7 @@ then
   mkdir -p $SOUNDS_PATH
   mkdir -p $DB_PATH
 
-  #get sensory and build
-  echo
-  echo "==============> CLONING AND BUILDING SENSORY =============="
-  echo
-
-  cd $THIRD_PARTY_PATH
-  git clone git://github.com/Sensory/alexa-rpi.git
-  pushd alexa-rpi > /dev/null
-  git checkout $SENSORY_MODEL_HASH -- models/spot-alexa-rpi-31000.snsr
-  popd > /dev/null
-  bash ./alexa-rpi/bin/license.sh
+  run_os_specifics
 
   if [ ! -d "${SOURCE_PATH}/avs-device-sdk" ]
   then
@@ -262,6 +249,7 @@ then
         pushd $SOURCE_PATH/avs-device-sdk/ThirdParty/pi_hat_ctrl > /dev/null
         gcc pi_hat_ctrl.c -o $PI_HAT_CTRL_PATH/pi_hat_ctrl -lwiringPi -lm
         popd > /dev/null
+        PI_HAT_FLAG = "-DPI_HAT_CTRL=ON"
     fi
   fi
 
@@ -272,26 +260,11 @@ then
 
   mkdir -p $BUILD_PATH
   cd $BUILD_PATH
-  if [ $# -ge 1 ] && [ $1 = "xvf3510" ] ; then
-    cmake "$SOURCE_PATH/avs-device-sdk" \
-    -DSENSORY_KEY_WORD_DETECTOR=ON \
-    -DSENSORY_KEY_WORD_DETECTOR_LIB_PATH=$THIRD_PARTY_PATH/alexa-rpi/lib/libsnsr.a \
-    -DSENSORY_KEY_WORD_DETECTOR_INCLUDE_DIR=$THIRD_PARTY_PATH/alexa-rpi/include \
-    -DGSTREAMER_MEDIA_PLAYER=ON -DPORTAUDIO=ON \
-    -DPORTAUDIO_LIB_PATH="$THIRD_PARTY_PATH/portaudio/lib/.libs/libportaudio.$LIB_SUFFIX" \
-    -DPORTAUDIO_INCLUDE_DIR="$THIRD_PARTY_PATH/portaudio/include" \
-    -DCMAKE_BUILD_TYPE=DEBUG \
-    -DPI_HAT_CTRL=ON
-  else
-    cmake "$SOURCE_PATH/avs-device-sdk" \
-    -DSENSORY_KEY_WORD_DETECTOR=ON \
-    -DSENSORY_KEY_WORD_DETECTOR_LIB_PATH=$THIRD_PARTY_PATH/alexa-rpi/lib/libsnsr.a \
-    -DSENSORY_KEY_WORD_DETECTOR_INCLUDE_DIR=$THIRD_PARTY_PATH/alexa-rpi/include \
-    -DGSTREAMER_MEDIA_PLAYER=ON -DPORTAUDIO=ON \
-    -DPORTAUDIO_LIB_PATH="$THIRD_PARTY_PATH/portaudio/lib/.libs/libportaudio.$LIB_SUFFIX" \
-    -DPORTAUDIO_INCLUDE_DIR="$THIRD_PARTY_PATH/portaudio/include" \
-    -DCMAKE_BUILD_TYPE=DEBUG
-  fi
+  cmake "$SOURCE_PATH/avs-device-sdk" \
+      -DCMAKE_BUILD_TYPE=DEBUG \
+      "${CMAKE_PLATFORM_SPECIFIC[@]}" \
+      $PI_HAT_FLAG
+
   cd $BUILD_PATH
   make SampleApp -j2
 
