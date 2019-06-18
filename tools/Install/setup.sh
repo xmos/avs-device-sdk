@@ -249,7 +249,7 @@ then
         pushd $SOURCE_PATH/avs-device-sdk/ThirdParty/pi_hat_ctrl > /dev/null
         gcc pi_hat_ctrl.c -o $PI_HAT_CTRL_PATH/pi_hat_ctrl -lwiringPi -lm
         popd > /dev/null
-        PI_HAT_FLAG = "-DPI_HAT_CTRL=ON"
+        PI_HAT_FLAG="-DPI_HAT_CTRL=ON"
     fi
   fi
 
