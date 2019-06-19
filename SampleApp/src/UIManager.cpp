@@ -659,13 +659,13 @@ void UIManager::onActiveDeviceDisconnected(const DeviceAttributes& deviceAttribu
         }
         ConsolePrinter::prettyPrint({"BLUETOOTH DEVICE DISCONNECTED", "Name: " + deviceAttributes.name, oss.str()});
     });
+}
 
-UIManager::~UIManager(){
+UIManager::~UIManager() {
 #ifdef PI_HAT_CTRL
-        //Turn LED off
-        system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_LED_RGB 0 0 0");
+    //Turn LED off
+    system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_LED_RGB 0 0 0");
 #endif
-    }
 }
 
 }  // namespace sampleApp
