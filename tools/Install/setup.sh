@@ -22,7 +22,12 @@
 
 set -o errexit  # Exit the script if any statement fails.
 set -o nounset  # Exit the script if any uninitialized variable is used.
-
+if [ $# -ge 1 ] && [ $1 = "xvf3510" ]
+then
+  RUN_XVF3510_SETUP=1
+else
+  RUN_XVF3510_SETUP=0
+fi
 CLONE_URL=${CLONE_URL:- 'git://github.com/lucianomartin/avs-device-sdk.git'}
 
 PORT_AUDIO_FILE="pa_stable_v190600_20161030.tgz"
@@ -232,6 +237,13 @@ then
 
   run_os_specifics
 
+  if [ $RUN_XVF3510_SETUP ]
+  then
+    PI_HAT_FLAG="-DPI_HAT_CTRL=ON"
+  else
+    PI_HAT_FLAG=""
+  fi
+
   if [ ! -d "${SOURCE_PATH}/avs-device-sdk" ]
   then
     #get sdk
@@ -240,17 +252,17 @@ then
     echo
 
     cd $SOURCE_PATH
-    git clone --single-branch $CLONE_URL avs-device-sdk
-    if [ $# -ge 1 ] && [ $1 = "xvf3510" ] ; then
-        echo
-        echo "==============> BUILDING PI HAT CONTROL =============="
-        echo
+    git clone -b feature/test_v1.13 git://github.com/lucianomartin/avs-device-sdk.git
+    if [ $RUN_XVF3510_SETUP ]
+    then
+      echo
+      echo "==============> BUILDING PI HAT CONTROL =============="
+      echo
 
-        mkdir -p $PI_HAT_CTRL_PATH
-        pushd $SOURCE_PATH/avs-device-sdk/ThirdParty/pi_hat_ctrl > /dev/null
-        gcc pi_hat_ctrl.c -o $PI_HAT_CTRL_PATH/pi_hat_ctrl -lwiringPi -lm
-        popd > /dev/null
-        PI_HAT_FLAG="-DPI_HAT_CTRL=ON"
+      mkdir -p $PI_HAT_CTRL_PATH
+      pushd $SOURCE_PATH/avs-device-sdk/ThirdParty/pi_hat_ctrl > /dev/null
+      gcc pi_hat_ctrl.c -o $PI_HAT_CTRL_PATH/pi_hat_ctrl -lwiringPi -lm
+      popd > /dev/null
     fi
   fi
 
@@ -262,9 +274,9 @@ then
   mkdir -p $BUILD_PATH
   cd $BUILD_PATH
   cmake "$SOURCE_PATH/avs-device-sdk" \
+      $PI_HAT_FLAG \
       -DCMAKE_BUILD_TYPE=DEBUG \
-      "${CMAKE_PLATFORM_SPECIFIC[@]}" \
-      $PI_HAT_FLAG
+      "${CMAKE_PLATFORM_SPECIFIC[@]}"
 
   cd $BUILD_PATH
   make SampleApp -j2
