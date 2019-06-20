@@ -216,6 +216,51 @@ else
   exit 1
 fi
 
+
+# Create autostart script
+AUTOSTART_SESSION="avsrun"
+AUTOSTART_DIR=$HOME/.config/lxsession/LXDE-pi
+AUTOSTART=$AUTOSTART_DIR/autostart
+if [ ! -f $AUTOSTART ]; then
+    mkdir -p $AUTOSTART_DIR
+    cp /etc/xdg/lxsession/LXDE-pi/autostart $AUTOSTART
+fi
+STARTUP_SCRIPT=$CURRENT_DIR/.avsrun-startup.sh
+cat << EOF > "$STARTUP_SCRIPT"
+#!/bin/bash
+$BUILD_PATH/SampleApp/src/SampleApp $CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models
+\$SHELL
+EOF
+chmod a+rx $STARTUP_SCRIPT
+while true; do
+    read -p "Automatically run AVS SDK at startup (y/n)? " ANSWER
+    case ${ANSWER} in
+        n|N|no|NO )
+            grep $AUTOSTART_SESSION $AUTOSTART > /dev/null 2>&1
+            if [ $? == 0 ]; then
+                # Remove startup script from autostart file
+                sed -i '/'"$AUTOSTART_SESSION"'/d' $AUTOSTART
+            fi
+            break;;
+        y|Y|yes|YES )
+            grep $AUTOSTART_SESSION $AUTOSTART > /dev/null 2>&1
+            if [ $? != 0 ]; then #avsrun not present
+                if ! grep "vocalfusion_3510_sales_demo" $AUTOSTART ; then #vocalfusion_3510_sales_demo not present
+                    # Append startup script if not already in autostart file
+                    echo "@lxterminal -t $AUTOSTART_SESSION --geometry=150x50 -e $STARTUP_SCRIPT" >> $AUTOSTART
+                fi
+            else #avsrun present
+                if grep "vocalfusion_3510_sales_demo" $AUTOSTART ; then #vocalfusion_3510_sales_demo present
+                    # Remove startup script from autostart file
+                    echo "Warning: Not adding avsrun in autostart since offline demo is already present. Start AVS by following instructions on vocalfusion_3510_sales_demo startup"
+                    sed -i '/'"$AUTOSTART_SESSION"'/d' $AUTOSTART
+                fi
+            fi
+            break;;
+    esac
+done
+
+
 if [ ! -d "$BUILD_PATH" ]
 then
 
