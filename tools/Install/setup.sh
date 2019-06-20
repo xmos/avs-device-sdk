@@ -175,7 +175,7 @@ then
       source android.sh
     else
       echo "The installation script doesn't support current system. (System: $(uname -a))"
-      #exit 1
+      exit 1
     fi
 fi
 
