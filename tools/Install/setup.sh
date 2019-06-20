@@ -228,7 +228,7 @@ fi
 STARTUP_SCRIPT=$CURRENT_DIR/.avsrun-startup.sh
 cat << EOF > "$STARTUP_SCRIPT"
 #!/bin/bash
-$BUILD_PATH/SampleApp/src/SampleApp $CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models
+$BUILD_PATH/SampleApp/src/SampleApp $CONFIG_JSON_FILE $THIRD_PARTY_PATH/alexa-rpi/models
 \$SHELL
 EOF
 chmod a+rx $STARTUP_SCRIPT
