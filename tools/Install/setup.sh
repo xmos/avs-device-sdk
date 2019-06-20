@@ -22,12 +22,7 @@
 
 set -o errexit  # Exit the script if any statement fails.
 set -o nounset  # Exit the script if any uninitialized variable is used.
-if [ $# -ge 1 ] && [ $1 = "xvf3510" ]
-then
-  RUN_XVF3510_SETUP=1
-else
-  RUN_XVF3510_SETUP=0
-fi
+
 CLONE_URL=${CLONE_URL:- 'git://github.com/lucianomartin/avs-device-sdk.git'}
 
 PORT_AUDIO_FILE="pa_stable_v190600_20161030.tgz"
@@ -66,8 +61,12 @@ ANDROID_CONFIG_FILE=""
 PI_HAT_CTRL_PATH="$THIRD_PARTY_PATH/pi_hat_ctrl"
 ALIASES="$HOME/.bash_aliases"
 
+# Default value for XMOS device
+XVF_DEVICE="xvf3510"
+
 # Default device serial number if nothing is specified
 DEVICE_SERIAL_NUMBER="123456"
+
 
 GSTREAMER_AUDIO_SINK="autoaudiosink"
 
@@ -113,6 +112,7 @@ show_help() {
   echo  'Optional parameters'
   echo  '  -s <serial-number>  If nothing is provided, the default device serial number is 123456'
   echo  '  -a <file-name>      The file that contains Android installation configurations (e.g. androidConfig.txt)'
+  echo  '  -x                  XMOS device to setup: default xvf3510, possible value xvf3500'
   echo  '  -h                  Display this help and exit'
 }
 
@@ -121,7 +121,7 @@ if [[ $# -lt 1 ]]; then
     exit 1
 fi
 
-CONFIG_JSON_FILE="config.json"
+CONFIG_JSON_FILE=$1
 if [ ! -f "$CONFIG_JSON_FILE" ]; then
     echo "Config json file not found!"
     show_help
@@ -129,7 +129,7 @@ if [ ! -f "$CONFIG_JSON_FILE" ]; then
 fi
 shift 1
 
-OPTIONS=s:a:h
+OPTIONS=s:a:x:h
 while getopts "$OPTIONS" opt ; do
     case $opt in
         s )
@@ -142,6 +142,9 @@ while getopts "$OPTIONS" opt ; do
                 exit 1
             fi
             source $ANDROID_CONFIG_FILE
+            ;;
+        x )
+            XVF_DEVICE="$OPTARG"
             ;;
         h )
             show_help
@@ -172,7 +175,7 @@ then
       source android.sh
     else
       echo "The installation script doesn't support current system. (System: $(uname -a))"
-      exit 1
+      #exit 1
     fi
 fi
 
@@ -280,7 +283,7 @@ then
 
   run_os_specifics
 
-  if [ $RUN_XVF3510_SETUP ]
+  if [ $XVF_DEVICE = "xvf3510" ]
   then
     PI_HAT_FLAG="-DPI_HAT_CTRL=ON"
   else
@@ -296,7 +299,7 @@ then
 
     cd $SOURCE_PATH
     git clone -b feature/test_v1.13 git://github.com/lucianomartin/avs-device-sdk.git
-    if [ $RUN_XVF3510_SETUP ]
+    if [ $XVF_DEVICE = "xvf3510"]
     then
       echo
       echo "==============> BUILDING PI HAT CONTROL =============="
