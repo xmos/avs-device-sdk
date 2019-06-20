@@ -228,7 +228,7 @@ fi
 STARTUP_SCRIPT=$CURRENT_DIR/.avsrun-startup.sh
 cat << EOF > "$STARTUP_SCRIPT"
 #!/bin/bash
-$BUILD_PATH/SampleApp/src/SampleApp $CONFIG_JSON_FILE $THIRD_PARTY_PATH/alexa-rpi/models
+$BUILD_PATH/SampleApp/src/SampleApp $OUTPUT_CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models
 \$SHELL
 EOF
 chmod a+rx $STARTUP_SCRIPT
@@ -236,15 +236,13 @@ while true; do
     read -p "Automatically run AVS SDK at startup (y/n)? " ANSWER
     case ${ANSWER} in
         n|N|no|NO )
-            grep $AUTOSTART_SESSION $AUTOSTART > /dev/null 2>&1
-            if [ $? == 0 ]; then
+            if grep $AUTOSTART_SESSION $AUTOSTART; then
                 # Remove startup script from autostart file
                 sed -i '/'"$AUTOSTART_SESSION"'/d' $AUTOSTART
             fi
             break;;
         y|Y|yes|YES )
-            grep $AUTOSTART_SESSION $AUTOSTART > /dev/null 2>&1
-            if [ $? != 0 ]; then #avsrun not present
+            if ! grep $AUTOSTART $AUTOSTART; then #avsrun not present
                 if ! grep "vocalfusion_3510_sales_demo" $AUTOSTART ; then #vocalfusion_3510_sales_demo not present
                     # Append startup script if not already in autostart file
                     echo "@lxterminal -t $AUTOSTART_SESSION --geometry=150x50 -e $STARTUP_SCRIPT" >> $AUTOSTART
