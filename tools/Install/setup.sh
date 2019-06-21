@@ -113,7 +113,7 @@ show_help() {
   echo  'Optional parameters'
   echo  '  -s <serial-number>  If nothing is provided, the default device serial number is 123456'
   echo  '  -a <file-name>      The file that contains Android installation configurations (e.g. androidConfig.txt)'
-  echo  '  -x <device type>    XMOS device to setup: default xvf3510, possible value xvf3500'
+  echo  '  -x <device-type>    XMOS device to setup: default xvf3510, possible value xvf3500'
   echo  '  -h                  Display this help and exit'
 }
 
