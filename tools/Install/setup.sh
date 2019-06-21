@@ -149,7 +149,6 @@ while getopts "$OPTIONS" opt ; do
             ;;
         d )
             XMOS_DEVICE="$OPTARG"
-            echo $XMOS_DEVICE
             ;;
         h )
             show_help
