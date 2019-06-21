@@ -111,10 +111,10 @@ show_help() {
   echo  ' The  <xmos-tag> is the tag in the GIT repository xmos/avs-device-sdk'
   echo  ''
   echo  'Optional parameters'
-  echo  '  -s <serial-number>  If nothing is provided, the default device serial number is 123456'
-  echo  '  -a <file-name>      The file that contains Android installation configurations (e.g. androidConfig.txt)'
-  echo  '  -x <device-type>    XMOS device to setup: default xvf3510, possible value xvf3500'
-  echo  '  -h                  Display this help and exit'
+  echo  '  -s <serial-number>    If nothing is provided, the default device serial number is 123456'
+  echo  '  -a <file-name>        The file that contains Android installation configurations (e.g. androidConfig.txt)'
+  echo  '  -d <xmos-device-type> XMOS device to setup: default xvf3510, possible value xvf3500'
+  echo  '  -h                    Display this help and exit'
 }
 
 if [[ $# -lt 2 ]]; then
@@ -384,10 +384,9 @@ sed -i '/AVS/d' $ALIASES > /dev/null
 sed -i '/AlexaClientSDKConfig.json/d' $ALIASES > /dev/null
 sed -i '/Remove/d' $ALIASES > /dev/null
 
-echo "alias avsrun="$BUILD_PATH/SampleApp/src/SampleApp $OUTPUT_CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models"" >> $ALIASES
-echo "alias avsunit="$TEST_SCRIPT"" >> $ALIASES
-echo "alias avssetup="$THIS_SCRIPT"" >> $ALIASES
-#echo "alias avsauth="$START_AUTH_SCRIPT"" >> $ALIASES
+echo "alias avsrun=\"$BUILD_PATH/SampleApp/src/SampleApp $OUTPUT_CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models\"" >> $ALIASES
+echo "alias avsunit=\"bash $TEST_SCRIPT\"" >> $ALIASES
+echo "alias avssetup=\"cd $CURRENT_DIR; bash setup.sh\"" >> $ALIASES
 echo "echo "Available AVS aliases:"" >> $ALIASES
 echo "echo -e "avsrun, avsunit, avssetup, avsauth"" >> $ALIASES
 echo "echo "If authentication fails, please check $BUILD_PATH/Integration/AlexaClientSDKConfig.json"" >> $ALIASES
