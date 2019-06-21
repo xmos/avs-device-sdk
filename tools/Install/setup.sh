@@ -104,19 +104,20 @@ get_platform() {
 }
 
 show_help() {
-  echo  'Usage: setup.sh <config-json-file> [OPTIONS]'
+  echo  'Usage: setup.sh <config-json-file> <xmos-tag> [OPTIONS]'
   echo  'The <config-json-file> can be downloaded from developer portal and must contain the following:'
   echo  '   "clientId": "<OAuth client ID>"'
   echo  '   "productId": "<your product name for device>"'
+  echo  ' The  <xmos-tag> is the tag in the GIT repository xmos/avs-device-sdk'
   echo  ''
   echo  'Optional parameters'
   echo  '  -s <serial-number>  If nothing is provided, the default device serial number is 123456'
   echo  '  -a <file-name>      The file that contains Android installation configurations (e.g. androidConfig.txt)'
-  echo  '  -x                  XMOS device to setup: default xvf3510, possible value xvf3500'
+  echo  '  -x <device type>    XMOS device to setup: default xvf3510, possible value xvf3500'
   echo  '  -h                  Display this help and exit'
 }
 
-if [[ $# -lt 1 ]]; then
+if [[ $# -lt 2 ]]; then
     show_help
     exit 1
 fi
@@ -127,9 +128,12 @@ if [ ! -f "$CONFIG_JSON_FILE" ]; then
     show_help
     exit 1
 fi
+
+XMOS_TAG=$2
+
 shift 1
 
-OPTIONS=s:a:x:h
+OPTIONS=s:a:d:h
 while getopts "$OPTIONS" opt ; do
     case $opt in
         s )
@@ -143,8 +147,9 @@ while getopts "$OPTIONS" opt ; do
             fi
             source $ANDROID_CONFIG_FILE
             ;;
-        x )
-            XVF_DEVICE="$OPTARG"
+        d )
+            XMOS_DEVICE="$OPTARG"
+            echo $XMOS_DEVICE
             ;;
         h )
             show_help
@@ -283,7 +288,7 @@ then
 
   run_os_specifics
 
-  if [ $XVF_DEVICE = "xvf3510" ]
+  if [ $XMOS_DEVICE = "xvf3510" ]
   then
     PI_HAT_FLAG="-DPI_HAT_CTRL=ON"
   else
@@ -298,8 +303,8 @@ then
     echo
 
     cd $SOURCE_PATH
-    git clone -b feature/test_v1.13 git://github.com/lucianomartin/avs-device-sdk.git
-    if [ $XVF_DEVICE = "xvf3510" ]
+    git clone -b $XMOS_TAG $CLONE_URL
+    if [ $XMOS_DEVICE = "xvf3510" ]
     then
       echo
       echo "==============> BUILDING PI HAT CONTROL =============="
