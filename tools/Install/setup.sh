@@ -299,7 +299,7 @@ then
 
     cd $SOURCE_PATH
     git clone -b feature/test_v1.13 git://github.com/lucianomartin/avs-device-sdk.git
-    if [ $XVF_DEVICE = "xvf3510"]
+    if [ $XVF_DEVICE = "xvf3510" ]
     then
       echo
       echo "==============> BUILDING PI HAT CONTROL =============="
