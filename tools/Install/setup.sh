@@ -245,8 +245,8 @@ while true; do
             fi
             break;;
         y|Y|yes|YES )
-            if ! grep $AUTOSTART $AUTOSTART; then #avsrun not present
-                if ! grep "vocalfusion_3510_sales_demo" $AUTOSTART ; then #vocalfusion_3510_sales_demo not present
+            if ! grep $AUTOSTART_SESSION $AUTOSTART; then #avsrun not present
+                if ! grep "vocalfusion_3510_sales_demo" $AUTOSTART; then #vocalfusion_3510_sales_demo not present
                     # Append startup script if not already in autostart file
                     echo "@lxterminal -t $AUTOSTART_SESSION --geometry=150x50 -e $STARTUP_SCRIPT" >> $AUTOSTART
                 fi
