@@ -62,7 +62,7 @@ PI_HAT_CTRL_PATH="$THIRD_PARTY_PATH/pi_hat_ctrl"
 ALIASES="$HOME/.bash_aliases"
 
 # Default value for XMOS device
-XVF_DEVICE="xvf3510"
+XMOS_DEVICE="xvf3510"
 
 # Default device serial number if nothing is specified
 DEVICE_SERIAL_NUMBER="123456"
