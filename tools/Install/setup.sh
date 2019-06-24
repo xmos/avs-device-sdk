@@ -358,6 +358,12 @@ sed -i -e "1d" $TEMP_CONFIG_FILE
 # Append temp file to configuration file
 cat $TEMP_CONFIG_FILE >> $OUTPUT_CONFIG_FILE
 
+# Enable the suggestedLatency parameter for portAudio
+sed -i -e '/displayCardsSupported/s/$/,/' $OUTPUT_CONFIG_FILE
+sed -i -e '/portAudio/s/\/\///' $OUTPUT_CONFIG_FILE
+# the sed command below will remove the // on two consecutive lines
+sed -i -e '/suggestedLatency/{N;s/\/\///g;}' $OUTPUT_CONFIG_FILE
+
 # Delete temp file
 rm $TEMP_CONFIG_FILE
 
