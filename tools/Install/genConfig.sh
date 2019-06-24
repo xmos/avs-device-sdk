@@ -49,7 +49,7 @@ if [ ! -d "$SDK_SRC_PATH" ]; then
     echo 'Alexa Device Source directory not found!'
     exit 2
 fi
-INPUT_CONFIG_FILE="$SDK_SRC_PATH/Integration/AlexaClientSDKConfig_xmos.json"
+INPUT_CONFIG_FILE="$SDK_SRC_PATH/Integration/AlexaClientSDKConfig.json"
 if [ ! -f "$INPUT_CONFIG_FILE" ]; then
     echo "AlexaClientSDKConfig.json file not found in source directory!"
     exit 2
