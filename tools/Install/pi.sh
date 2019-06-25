@@ -13,6 +13,12 @@
 # permissions and limitations under the License.
 #
 
+
+#
+# Modified by XMOS Ltd
+# https://github.com/xmos/avs-device-sdk
+#
+
 if [ -z "$PLATFORM" ]; then
 	echo "You should run the setup.sh script."
 	exit 1

@@ -224,6 +224,11 @@ else
 fi
 
 
+echo
+echo "==============> CREATING AUTOSTART SCRIPT ============"
+echo
+
+
 # Create autostart script
 AUTOSTART_SESSION="avsrun"
 AUTOSTART_DIR=$HOME/.config/lxsession/LXDE-pi
@@ -270,6 +275,7 @@ if [ ! -d "$BUILD_PATH" ]
 then
 
   # Make sure required packages are installed
+  echo
   echo "==============> INSTALLING REQUIRED TOOLS AND PACKAGE ============"
   echo
 
@@ -348,7 +354,6 @@ cat << EOF > "$OUTPUT_CONFIG_FILE"
     },
 EOF
 
-#cd $INSTALL_BASE
 cd $CURRENT_DIR
 bash genConfig.sh config.json $DEVICE_SERIAL_NUMBER $CONFIG_DB_PATH $SOURCE_PATH/avs-device-sdk $TEMP_CONFIG_FILE
 
@@ -368,7 +373,7 @@ sed -i -e '/suggestedLatency/{N;s/\/\///g;}' $OUTPUT_CONFIG_FILE
 rm $TEMP_CONFIG_FILE
 
 echo
-echo "==============> FINAL CONFIGURATION  =============="
+echo "==============> FINAL CONFIGURATION AND ALIASES =============="
 echo
 cat $OUTPUT_CONFIG_FILE
 
@@ -397,12 +402,6 @@ echo "echo "Available AVS aliases:"" >> $ALIASES
 echo "echo -e "avsrun, avsunit, avssetup, avsauth"" >> $ALIASES
 echo "echo "If authentication fails, please check $BUILD_PATH/Integration/AlexaClientSDKConfig.json"" >> $ALIASES
 echo "echo "Remove .bash_aliases and open a new terminal to remove bindings"" >> $ALIASES
-
-
-echo
-echo "==============> AUTHENTICATION =============="
-echo
-
 
 echo " **** Completed Configuration/Build ***"
 
