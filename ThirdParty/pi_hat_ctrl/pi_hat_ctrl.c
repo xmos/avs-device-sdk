@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <wiringPiI2C.h>
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
@@ -438,8 +437,7 @@ void init_dac(){
 	// Setup I2C
 	file_open();
 	i2c_start(PCAL6416A_ADR);
-	//int fd_PCAL6416A = wiringPiI2CSetup(PCAL6416A_ADR);
-	//int fd_TLV320DAC3101 = wiringPiI2CSetup(TLV320DAC3101_ADR);
+
     int read_config_reg = i2c_read(PCAL6416A_config_reg); // read config register of PCAL6416A
 	read_config_reg |= 0b10000000; // PIN DAC_RST_N defined as an input
 	read_config_reg &= 0b01111111; // PIN DAC_RST_N defined as an output
@@ -608,7 +606,6 @@ int int_input(char **argv){
 	// Setup I2C
 	int T;
 	int read_int_mask_port0_reg;
-    int fd_PCAL6416A = wiringPiI2CSetup(PCAL6416A_ADR);
     // Setup I2C
 	file_open();
 	i2c_start(PCAL6416A_ADR);
@@ -674,8 +671,6 @@ void set_led_speaking(){
     double hsv_XMOS_dark_green__h = 78;
     double hsv_XMOS_dark_green__s = 0.995;
     double hsv_XMOS_dark_green__v = 0.859;
-	
-	int fd = wiringPiI2CSetup(IS31FL3193_ADR);
 	
 	// Setup I2C
 	file_open();
