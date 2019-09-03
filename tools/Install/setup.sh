@@ -105,9 +105,9 @@ get_platform() {
 show_help() {
   echo  'Usage: setup.sh <config-json-file> <xmos-tag> [OPTIONS]'
   echo  'The <config-json-file> can be downloaded from developer portal and must contain the following:'
-  echo  '   "clientId": "<OAuth client ID>"'
+  echo  '   "clientId": "<Auth client ID>"'
   echo  '   "productId": "<your product name for device>"'
-  echo  ' The  <xmos-tag> is the tag in the GIT repository xmos/avs-device-sdk'
+  echo  'The  <xmos-tag> is the tag in the GIT repository xmos/avs-device-sdk'
   echo  ''
   echo  'Optional parameters'
   echo  '  -s <serial-number>    If nothing is provided, the default device serial number is 123456'
@@ -116,9 +116,17 @@ show_help() {
   echo  '  -h                    Display this help and exit'
 }
 
-if [[ $# -lt 2 ]]; then
+if [[ $# -lt 1 ]]; then
     show_help
     exit 1
+fi
+
+#TODO: set <xmos-tag> as optional parameter when vocalfusion_3510_avs_setup is updated
+if [[ $# -lt 2 ]]; then
+   echo 'No XMOS tag provided, using latest version'     
+    XMOS_TAG="master"
+else
+    XMOS_TAG=$2
 fi
 
 CONFIG_JSON_FILE=$1
@@ -128,7 +136,6 @@ if [ ! -f "$CONFIG_JSON_FILE" ]; then
     exit 1
 fi
 
-XMOS_TAG=$2
 
 shift 1
 
@@ -181,6 +188,8 @@ then
       exit 1
     fi
 fi
+
+build_kwd_engine
 
 echo "################################################################################"
 echo "################################################################################"
