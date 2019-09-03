@@ -189,8 +189,6 @@ then
     fi
 fi
 
-build_kwd_engine
-
 echo "################################################################################"
 echo "################################################################################"
 echo ""
@@ -346,6 +344,7 @@ then
   make SampleApp -j2
 
 else
+  build_kwd_engine
   cd $BUILD_PATH
   make SampleApp -j2
 fi

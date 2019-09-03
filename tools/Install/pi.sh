@@ -43,7 +43,7 @@ install_dependencies() {
 
 run_os_specifics() {
   build_port_audio
-  # build_kwd_engine
+  build_kwd_engine
   # configure_sound
 }
 
