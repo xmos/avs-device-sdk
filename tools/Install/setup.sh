@@ -64,6 +64,9 @@ ALIASES="$HOME/.bash_aliases"
 # Default value for XMOS device
 XMOS_DEVICE="xvf3510"
 
+# Default value for AVS SDK version tag
+AVS_SDK_VERSION_TAG="master"
+
 # Default device serial number if nothing is specified
 DEVICE_SERIAL_NUMBER="123456"
 
@@ -107,26 +110,18 @@ show_help() {
   echo  'The <config-json-file> can be downloaded from developer portal and must contain the following:'
   echo  '   "clientId": "<Auth client ID>"'
   echo  '   "productId": "<your product name for device>"'
-  echo  'The  <xmos-tag> is the tag in the GIT repository xmos/avs-device-sdk'
   echo  ''
   echo  'Optional parameters'
-  echo  '  -s <serial-number>    If nothing is provided, the default device serial number is 123456'
-  echo  '  -a <file-name>        The file that contains Android installation configurations (e.g. androidConfig.txt)'
-  echo  '  -d <xmos-device-type> XMOS device to setup: default xvf3510, possible value xvf3500'
-  echo  '  -h                    Display this help and exit'
+  echo  '  -t <avs-sdk-version-tag> The tag in the GIT repository xmos/avs-device-sdk'
+  echo  '  -s <serial-number>       If nothing is provided, the default device serial number is 123456'
+  echo  '  -a <file-name>           The file that contains Android installation configurations (e.g. androidConfig.txt)'
+  echo  '  -d <xmos-device-type>    XMOS device to setup: default xvf3510, possible value xvf3500'
+  echo  '  -h                       Display this help and exit'
 }
 
 if [[ $# -lt 1 ]]; then
     show_help
     exit 1
-fi
-
-#TODO: set <xmos-tag> as optional parameter when vocalfusion_3510_avs_setup is updated
-if [[ $# -lt 2 ]]; then
-   echo 'No XMOS tag provided, using latest version'     
-    XMOS_TAG="master"
-else
-    XMOS_TAG=$2
 fi
 
 CONFIG_JSON_FILE=$1
@@ -139,9 +134,11 @@ fi
 
 shift 1
 
-OPTIONS=s:a:d:h
+OPTIONS=t:s:a:d:h
 while getopts "$OPTIONS" opt ; do
     case $opt in
+        t ) AVS_SDK_VERSION_TAG="$OPTARG"
+            ;;
         s )
             DEVICE_SERIAL_NUMBER="$OPTARG"
             ;;
@@ -314,7 +311,7 @@ then
     echo
 
     cd $SOURCE_PATH
-    git clone -b $XMOS_TAG $CLONE_URL
+    git clone -b $AVS_SDK_VERSION_TAG $CLONE_URL
     if [ $XMOS_DEVICE = "xvf3510" ]
     then
       echo
