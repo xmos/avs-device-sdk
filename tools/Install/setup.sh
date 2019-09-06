@@ -399,9 +399,9 @@ sed -i '/Remove/d' $ALIASES > /dev/null
 
 echo "alias avsrun=\"$BUILD_PATH/SampleApp/src/SampleApp $OUTPUT_CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models\"" >> $ALIASES
 echo "alias avsunit=\"bash $TEST_SCRIPT\"" >> $ALIASES
-echo "alias avssetup=\"cd $CURRENT_DIR; bash setup.sh\"" >> $ALIASES
+echo "avssetup() { f=\$(eval readlink -f \"\$1\"); cd /home/pi/vocalfusion_3510_avs_setup; bash setup.sh \$f; }" >> $ALIASES
 echo "echo "Available AVS aliases:"" >> $ALIASES
-echo "echo -e "avsrun, avsunit, avssetup, avsauth"" >> $ALIASES
+echo "echo -e "avsrun, avsunit, avssetup"" >> $ALIASES
 echo "echo "If authentication fails, please check $BUILD_PATH/Integration/AlexaClientSDKConfig.json"" >> $ALIASES
 echo "echo "Remove .bash_aliases and open a new terminal to remove bindings"" >> $ALIASES
 
