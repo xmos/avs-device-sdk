@@ -113,7 +113,7 @@ show_help() {
   echo  '   "productId": "<your product name for device>"'
   echo  ''
   echo  'Optio/nal parameters'
-  echo  '  -t <avs-sdk-version-tag> The tag in the GIT repository xmos/avs-device-sdk'
+  echo  '  -t <avs-sdk-version-tag> The tag in the GIT repository xmos/avs-device-sdk, default is 'master''
   echo  '  -s <serial-number>       If nothing is provided, the default device serial number is 123456'
   echo  '  -a <file-name>           The file that contains Android installation configurations (e.g. androidConfig.txt)'
   echo  '  -d <xmos-device-type>    XMOS device to setup: default xvf3510, possible value xvf3500'
