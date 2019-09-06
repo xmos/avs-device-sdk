@@ -28,8 +28,9 @@ CLONE_URL=${CLONE_URL:- 'git://github.com/xmos/avs-device-sdk.git'}
 PORT_AUDIO_FILE="pa_stable_v190600_20161030.tgz"
 PORT_AUDIO_DOWNLOAD_URL="http://www.portaudio.com/archives/$PORT_AUDIO_FILE"
 
-
 BUILD_TESTS=${BUILD_TESTS:-'true'}
+
+pushd $( pwd )
 
 pushd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null
 CURRENT_DIR="$( pwd )"
@@ -170,7 +171,7 @@ PLATFORM=${PLATFORM:-$(get_platform)}
 
 if [ "$PLATFORM" == "Raspberry pi" ]
 then
-  source pi.sh
+  source $CURRENT_DIR/pi.sh
 elif [ "$PLATFORM" == "Windows mingw64" ]
 then
   source mingw.sh
@@ -399,11 +400,11 @@ sed -i '/Remove/d' $ALIASES > /dev/null
 
 echo "alias avsrun=\"$BUILD_PATH/SampleApp/src/SampleApp $OUTPUT_CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models\"" >> $ALIASES
 echo "alias avsunit=\"bash $TEST_SCRIPT\"" >> $ALIASES
-echo "avssetup() { f=\$(eval readlink -f \"\$1\"); cd /home/pi/vocalfusion_3510_avs_setup; bash setup.sh \$f; }" >> $ALIASES
+echo "avssetup() { f=\$(eval readlink -f \"\$1\"); bash /home/pi/vocalfusion_3510_avs_setup/setup.sh \$f; }" >> $ALIASES
 echo "echo "Available AVS aliases:"" >> $ALIASES
 echo "echo -e "avsrun, avsunit, avssetup"" >> $ALIASES
 echo "echo "If authentication fails, please check $BUILD_PATH/Integration/AlexaClientSDKConfig.json"" >> $ALIASES
 echo "echo "Remove .bash_aliases and open a new terminal to remove bindings"" >> $ALIASES
 
 echo " **** Completed Configuration/Build ***"
-
+popd > /dev/null

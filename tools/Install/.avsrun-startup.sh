@@ -3,7 +3,7 @@ CONFIG_JSON_FILE="/home/pi/sdk-folder/sdk-build/Integration/AlexaClientSDKConfig
 if [ -f $CONFIG_JSON_FILE ]; then
     /home/pi/sdk-folder/sdk-build/SampleApp/src/SampleApp $CONFIG_JSON_FILE /home/pi/sdk-folder/third-party/alexa-rpi/models
 else
-    echo "AVS setup is not completed, follow the steps below:"
+    echo "AVS setup is not complete, follow the steps below:"
     echo ""
     echo ""
     echo "1. Register Alexa with AVS and save a *config.json* file by following https://github.com/alexa/avs-device-sdk/wiki/Create-Security-Profile."
