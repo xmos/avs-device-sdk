@@ -358,7 +358,7 @@ cat << EOF > "$OUTPUT_CONFIG_FILE"
 EOF
 
 cd $CURRENT_DIR
-bash genConfig.sh config.json $DEVICE_SERIAL_NUMBER $CONFIG_DB_PATH $SOURCE_PATH/avs-device-sdk $TEMP_CONFIG_FILE
+bash genConfig.sh $CONFIG_JSON_FILE $DEVICE_SERIAL_NUMBER $CONFIG_DB_PATH $SOURCE_PATH/avs-device-sdk $TEMP_CONFIG_FILE
 
 # Delete first line from temp file to remove opening bracket
 sed -i -e "1d" $TEMP_CONFIG_FILE
@@ -404,7 +404,7 @@ echo "avssetup() { f=\$(eval readlink -f \"\$1\"); bash /home/pi/vocalfusion_351
 echo "echo "Available AVS aliases:"" >> $ALIASES
 echo "echo -e "avsrun, avsunit, avssetup"" >> $ALIASES
 echo "echo "If authentication fails, please check $BUILD_PATH/Integration/AlexaClientSDKConfig.json"" >> $ALIASES
-echo "echo "Remove .bash_aliases and open a new terminal to remove bindings"" >> $ALIASES
+echo "echo "To re-configure the AVS device SDK, please run avssetup with the appropriate JSON config file"" >> $ALIASES
 
 echo " **** Completed Configuration/Build ***"
 popd > /dev/null
