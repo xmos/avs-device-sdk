@@ -242,8 +242,8 @@ if [ ! -f $AUTOSTART ]; then
     cp /etc/xdg/lxsession/LXDE-pi/autostart $AUTOSTART
 fi
 STARTUP_SCRIPT=$CURRENT_DIR/.avsrun-startup.sh
-# copy script from avs-device-sdk
-cp $INSTALL_BASE/avs-device-sdk/tools/Install/.avsrun-startup.sh .
+# copy startup script from avs-device-sdk
+cp $INSTALL_BASE/avs-device-sdk/tools/Install/.avsrun-startup.sh $CURRENT_DIR
 chmod a+rx $STARTUP_SCRIPT
 
 while true; do
