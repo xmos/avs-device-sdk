@@ -111,7 +111,7 @@ show_help() {
   echo  '   "clientId": "<Auth client ID>"'
   echo  '   "productId": "<your product name for device>"'
   echo  ''
-  echo  'Optional parameters'
+  echo  'Optio/nal parameters'
   echo  '  -t <avs-sdk-version-tag> The tag in the GIT repository xmos/avs-device-sdk'
   echo  '  -s <serial-number>       If nothing is provided, the default device serial number is 123456'
   echo  '  -a <file-name>           The file that contains Android installation configurations (e.g. androidConfig.txt)'
@@ -242,7 +242,7 @@ if [ ! -f $AUTOSTART ]; then
 fi
 STARTUP_SCRIPT=$CURRENT_DIR/.avsrun-startup.sh
 # copy script from avs-device-sdk
-cp $UILD_FOLDER/avs-device-sdk/tools/Install/.avsrun-startup.sh
+cp $INSTALL_BASE/avs-device-sdk/tools/Install/.avsrun-startup.sh .
 chmod a+rx $STARTUP_SCRIPT
 
 while true; do
