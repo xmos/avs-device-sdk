@@ -30,8 +30,6 @@ PORT_AUDIO_DOWNLOAD_URL="http://www.portaudio.com/archives/$PORT_AUDIO_FILE"
 
 BUILD_TESTS=${BUILD_TESTS:-'true'}
 
-pushd $( pwd )
-
 pushd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null
 CURRENT_DIR="$( pwd )"
 THIS_SCRIPT="$CURRENT_DIR/setup.sh"
@@ -400,11 +398,10 @@ sed -i '/Remove/d' $ALIASES > /dev/null
 
 echo "alias avsrun=\"$BUILD_PATH/SampleApp/src/SampleApp $OUTPUT_CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models\"" >> $ALIASES
 echo "alias avsunit=\"bash $TEST_SCRIPT\"" >> $ALIASES
-echo "avssetup() { f=\$(eval readlink -f \"\$1\"); bash /home/pi/$CURRENT_DIR/setup.sh \$f; }" >> $ALIASES
+echo "avssetup() { f=\$(eval readlink -f \"\$1\"); bash $CURRENT_DIR/setup.sh \$f; }" >> $ALIASES
 echo "echo "Available AVS aliases:"" >> $ALIASES
 echo "echo -e "avsrun, avsunit, avssetup"" >> $ALIASES
 echo "echo "If authentication fails, please check $BUILD_PATH/Integration/AlexaClientSDKConfig.json"" >> $ALIASES
 echo "echo "To re-configure the AVS device SDK, please run avssetup with the appropriate JSON config file"" >> $ALIASES
 
 echo " **** Completed Configuration/Build ***"
-popd > /dev/null
