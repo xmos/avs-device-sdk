@@ -112,7 +112,7 @@ show_help() {
   echo  '   "clientId": "<Auth client ID>"'
   echo  '   "productId": "<your product name for device>"'
   echo  ''
-  echo  'Optio/nal parameters'
+  echo  'Optional parameters'
   echo  '  -t <avs-sdk-version-tag> The tag in the GIT repository xmos/avs-device-sdk, default is 'master''
   echo  '  -s <serial-number>       If nothing is provided, the default device serial number is 123456'
   echo  '  -a <file-name>           The file that contains Android installation configurations (e.g. androidConfig.txt)'
@@ -400,7 +400,7 @@ sed -i '/Remove/d' $ALIASES > /dev/null
 
 echo "alias avsrun=\"$BUILD_PATH/SampleApp/src/SampleApp $OUTPUT_CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models\"" >> $ALIASES
 echo "alias avsunit=\"bash $TEST_SCRIPT\"" >> $ALIASES
-echo "avssetup() { f=\$(eval readlink -f \"\$1\"); bash /home/pi/vocalfusion_3510_avs_setup/setup.sh \$f; }" >> $ALIASES
+echo "avssetup() { f=\$(eval readlink -f \"\$1\"); bash /home/pi/$CURRENT_DIR/setup.sh \$f; }" >> $ALIASES
 echo "echo "Available AVS aliases:"" >> $ALIASES
 echo "echo -e "avsrun, avsunit, avssetup"" >> $ALIASES
 echo "echo "If authentication fails, please check $BUILD_PATH/Integration/AlexaClientSDKConfig.json"" >> $ALIASES
