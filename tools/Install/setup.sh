@@ -28,7 +28,6 @@ CLONE_URL=${CLONE_URL:- 'git://github.com/xmos/avs-device-sdk.git'}
 PORT_AUDIO_FILE="pa_stable_v190600_20161030.tgz"
 PORT_AUDIO_DOWNLOAD_URL="http://www.portaudio.com/archives/$PORT_AUDIO_FILE"
 
-
 BUILD_TESTS=${BUILD_TESTS:-'true'}
 
 pushd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null
@@ -63,6 +62,9 @@ ALIASES="$HOME/.bash_aliases"
 
 # Default value for XMOS device
 XMOS_DEVICE="xvf3510"
+
+# Default value for AVS SDK version tag
+AVS_SDK_VERSION_TAG="master"
 
 # Default device serial number if nothing is specified
 DEVICE_SERIAL_NUMBER="123456"
@@ -105,18 +107,18 @@ get_platform() {
 show_help() {
   echo  'Usage: setup.sh <config-json-file> <xmos-tag> [OPTIONS]'
   echo  'The <config-json-file> can be downloaded from developer portal and must contain the following:'
-  echo  '   "clientId": "<OAuth client ID>"'
+  echo  '   "clientId": "<Auth client ID>"'
   echo  '   "productId": "<your product name for device>"'
-  echo  ' The  <xmos-tag> is the tag in the GIT repository xmos/avs-device-sdk'
   echo  ''
   echo  'Optional parameters'
-  echo  '  -s <serial-number>    If nothing is provided, the default device serial number is 123456'
-  echo  '  -a <file-name>        The file that contains Android installation configurations (e.g. androidConfig.txt)'
-  echo  '  -d <xmos-device-type> XMOS device to setup: default xvf3510, possible value xvf3500'
-  echo  '  -h                    Display this help and exit'
+  echo  '  -t <avs-sdk-version-tag> The tag in the GIT repository xmos/avs-device-sdk, default is 'master''
+  echo  '  -s <serial-number>       If nothing is provided, the default device serial number is 123456'
+  echo  '  -a <file-name>           The file that contains Android installation configurations (e.g. androidConfig.txt)'
+  echo  '  -d <xmos-device-type>    XMOS device to setup: default xvf3510, possible value xvf3500'
+  echo  '  -h                       Display this help and exit'
 }
 
-if [[ $# -lt 2 ]]; then
+if [[ $# -lt 1 ]]; then
     show_help
     exit 1
 fi
@@ -128,13 +130,14 @@ if [ ! -f "$CONFIG_JSON_FILE" ]; then
     exit 1
 fi
 
-XMOS_TAG=$2
 
 shift 1
 
-OPTIONS=s:a:d:h
+OPTIONS=t:s:a:d:h
 while getopts "$OPTIONS" opt ; do
     case $opt in
+        t ) AVS_SDK_VERSION_TAG="$OPTARG"
+            ;;
         s )
             DEVICE_SERIAL_NUMBER="$OPTARG"
             ;;
@@ -166,7 +169,7 @@ PLATFORM=${PLATFORM:-$(get_platform)}
 
 if [ "$PLATFORM" == "Raspberry pi" ]
 then
-  source pi.sh
+  source $CURRENT_DIR/pi.sh
 elif [ "$PLATFORM" == "Windows mingw64" ]
 then
   source mingw.sh
@@ -228,7 +231,7 @@ echo "==============> CREATING AUTOSTART SCRIPT ============"
 echo
 
 
-# Create autostart script
+# Set up autostart script
 AUTOSTART_SESSION="avsrun"
 AUTOSTART_DIR=$HOME/.config/lxsession/LXDE-pi
 AUTOSTART=$AUTOSTART_DIR/autostart
@@ -237,12 +240,10 @@ if [ ! -f $AUTOSTART ]; then
     cp /etc/xdg/lxsession/LXDE-pi/autostart $AUTOSTART
 fi
 STARTUP_SCRIPT=$CURRENT_DIR/.avsrun-startup.sh
-cat << EOF > "$STARTUP_SCRIPT"
-#!/bin/bash
-$BUILD_PATH/SampleApp/src/SampleApp $OUTPUT_CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models
-\$SHELL
-EOF
+# copy startup script from avs-device-sdk
+cp $INSTALL_BASE/avs-device-sdk/tools/Install/.avsrun-startup.sh $CURRENT_DIR
 chmod a+rx $STARTUP_SCRIPT
+
 while true; do
     read -p "Automatically run AVS SDK at startup (y/n)? " ANSWER
     case ${ANSWER} in
@@ -307,7 +308,7 @@ then
     echo
 
     cd $SOURCE_PATH
-    git clone -b $XMOS_TAG $CLONE_URL
+    git clone -b $AVS_SDK_VERSION_TAG $CLONE_URL
     if [ $XMOS_DEVICE = "xvf3510" ]
     then
       echo
@@ -337,6 +338,7 @@ then
   make SampleApp -j2
 
 else
+  build_kwd_engine
   cd $BUILD_PATH
   make SampleApp -j2
 fi
@@ -354,7 +356,7 @@ cat << EOF > "$OUTPUT_CONFIG_FILE"
 EOF
 
 cd $CURRENT_DIR
-bash genConfig.sh config.json $DEVICE_SERIAL_NUMBER $CONFIG_DB_PATH $SOURCE_PATH/avs-device-sdk $TEMP_CONFIG_FILE
+bash genConfig.sh $CONFIG_JSON_FILE $DEVICE_SERIAL_NUMBER $CONFIG_DB_PATH $SOURCE_PATH/avs-device-sdk $TEMP_CONFIG_FILE
 
 # Delete first line from temp file to remove opening bracket
 sed -i -e "1d" $TEMP_CONFIG_FILE
@@ -396,11 +398,10 @@ sed -i '/Remove/d' $ALIASES > /dev/null
 
 echo "alias avsrun=\"$BUILD_PATH/SampleApp/src/SampleApp $OUTPUT_CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models\"" >> $ALIASES
 echo "alias avsunit=\"bash $TEST_SCRIPT\"" >> $ALIASES
-echo "alias avssetup=\"cd $CURRENT_DIR; bash setup.sh\"" >> $ALIASES
+echo "avssetup() { f=\$(eval readlink -f \"\$1\"); bash $CURRENT_DIR/setup.sh \$f; }" >> $ALIASES
 echo "echo "Available AVS aliases:"" >> $ALIASES
-echo "echo -e "avsrun, avsunit, avssetup, avsauth"" >> $ALIASES
+echo "echo -e "avsrun, avsunit, avssetup"" >> $ALIASES
 echo "echo "If authentication fails, please check $BUILD_PATH/Integration/AlexaClientSDKConfig.json"" >> $ALIASES
-echo "echo "Remove .bash_aliases and open a new terminal to remove bindings"" >> $ALIASES
+echo "echo "To re-configure the AVS device SDK, please run avssetup with the appropriate JSON config file"" >> $ALIASES
 
 echo " **** Completed Configuration/Build ***"
-
