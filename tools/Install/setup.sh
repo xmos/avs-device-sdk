@@ -23,7 +23,7 @@
 set -o errexit  # Exit the script if any statement fails.
 set -o nounset  # Exit the script if any uninitialized variable is used.
 
-CLONE_URL=${CLONE_URL:- 'git://github.com/xmos/avs-device-sdk.git'}
+CLONE_URL=${CLONE_URL:- 'git://github.com/shuchitak/avs-device-sdk.git'}
 
 PORT_AUDIO_FILE="pa_stable_v190600_20161030.tgz"
 PORT_AUDIO_DOWNLOAD_URL="http://www.portaudio.com/archives/$PORT_AUDIO_FILE"
@@ -58,7 +58,6 @@ LIB_SUFFIX="a"
 ANDROID_CONFIG_FILE=""
 
 PI_HAT_CTRL_PATH="$THIRD_PARTY_PATH/pi_hat_ctrl"
-ALIASES="$HOME/.bash_aliases"
 
 # Default value for XMOS device
 XMOS_DEVICE="xvf3510"
@@ -225,52 +224,6 @@ else
   exit 1
 fi
 
-
-echo
-echo "==============> CREATING AUTOSTART SCRIPT ============"
-echo
-
-
-# Set up autostart script
-AUTOSTART_SESSION="avsrun"
-AUTOSTART_DIR=$HOME/.config/lxsession/LXDE-pi
-AUTOSTART=$AUTOSTART_DIR/autostart
-if [ ! -f $AUTOSTART ]; then
-    mkdir -p $AUTOSTART_DIR
-    cp /etc/xdg/lxsession/LXDE-pi/autostart $AUTOSTART
-fi
-STARTUP_SCRIPT=$CURRENT_DIR/.avsrun-startup.sh
-# copy startup script from avs-device-sdk
-cp $INSTALL_BASE/avs-device-sdk/tools/Install/.avsrun-startup.sh $CURRENT_DIR
-chmod a+rx $STARTUP_SCRIPT
-
-while true; do
-    read -p "Automatically run AVS SDK at startup (y/n)? " ANSWER
-    case ${ANSWER} in
-        n|N|no|NO )
-            if grep $AUTOSTART_SESSION $AUTOSTART; then
-                # Remove startup script from autostart file
-                sed -i '/'"$AUTOSTART_SESSION"'/d' $AUTOSTART
-            fi
-            break;;
-        y|Y|yes|YES )
-            if ! grep $AUTOSTART_SESSION $AUTOSTART; then #avsrun not present
-                if ! grep "vocalfusion_3510_sales_demo" $AUTOSTART; then #vocalfusion_3510_sales_demo not present
-                    # Append startup script if not already in autostart file
-                    echo "@lxterminal -t $AUTOSTART_SESSION --geometry=150x50 -e $STARTUP_SCRIPT" >> $AUTOSTART
-                fi
-            else #avsrun present
-                if grep "vocalfusion_3510_sales_demo" $AUTOSTART ; then #vocalfusion_3510_sales_demo present
-                    # Remove startup script from autostart file
-                    echo "Warning: Not adding avsrun in autostart since offline demo is already present. Start AVS by following instructions on vocalfusion_3510_sales_demo startup"
-                    sed -i '/'"$AUTOSTART_SESSION"'/d' $AUTOSTART
-                fi
-            fi
-            break;;
-    esac
-done
-
-
 if [ ! -d "$BUILD_PATH" ]
 then
 
@@ -382,26 +335,5 @@ generate_start_script
 
 generate_test_script
 
-if [ ! -f $ALIASES ] ; then
-echo "Create .bash_aliases file"
-cat << EOF > "$ALIASES"
-EOF
-fi
-echo "Delete any existing avs aliases and rewrite them"
-sed -i '/avsrun/d' $ALIASES > /dev/null
-sed -i '/avsunit/d' $ALIASES > /dev/null
-sed -i '/avssetup/d' $ALIASES > /dev/null
-sed -i '/avsauth/d' $ALIASES > /dev/null
-sed -i '/AVS/d' $ALIASES > /dev/null
-sed -i '/AlexaClientSDKConfig.json/d' $ALIASES > /dev/null
-sed -i '/Remove/d' $ALIASES > /dev/null
-
-echo "alias avsrun=\"$BUILD_PATH/SampleApp/src/SampleApp $OUTPUT_CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models\"" >> $ALIASES
-echo "alias avsunit=\"bash $TEST_SCRIPT\"" >> $ALIASES
-echo "avssetup() { f=\$(eval readlink -f \"\$1\"); bash $CURRENT_DIR/setup.sh \$f; }" >> $ALIASES
-echo "echo "Available AVS aliases:"" >> $ALIASES
-echo "echo -e "avsrun, avsunit, avssetup"" >> $ALIASES
-echo "echo "If authentication fails, please check $BUILD_PATH/Integration/AlexaClientSDKConfig.json"" >> $ALIASES
-echo "echo "To re-configure the AVS device SDK, please run avssetup with the appropriate JSON config file"" >> $ALIASES
 
 echo " **** Completed Configuration/Build ***"
