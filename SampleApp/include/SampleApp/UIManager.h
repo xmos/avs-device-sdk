@@ -225,6 +225,8 @@ public:
      * Prints menu for do not disturb mode.
      */
     void printDoNotDisturbScreen();
+    
+    ~UIManager();
 
 private:
     /**

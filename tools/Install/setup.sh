@@ -49,6 +49,8 @@ TEMP_CONFIG_FILE="$BUILD_PATH/Integration/tmp_AlexaClientSDKConfig.json"
 TEST_SCRIPT="$INSTALL_BASE/test.sh"
 LIB_SUFFIX="a"
 ANDROID_CONFIG_FILE=""
+PI_HAT_CTRL_PATH="$THIRD_PARTY_PATH/pi_hat_ctrl"
+PI_HAT_FLAG="-DPI_HAT_CTRL=ON"
 
 # Default device serial number if nothing is specified
 DEVICE_SERIAL_NUMBER="123456"
@@ -228,9 +230,16 @@ then
     echo "==============> CLONING SDK =============="
     echo
 
-    cd $SOURCE_PATH
-    git clone --single-branch $CLONE_URL avs-device-sdk
+    #cd $SOURCE_PATH
+    #git clone --single-branch $CLONE_URL avs-device-sdk
   fi
+  
+  echo
+  echo "==============> BUILDING PI HAT CONTROL =============="
+  echo
+
+  mkdir -p $PI_HAT_CTRL_PATH
+  pushd $SOURCE_PATH//home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/PI_HAT_CTRL.c > /dev/null
 
   # make the SDK
   echo
@@ -240,6 +249,7 @@ then
   mkdir -p $BUILD_PATH
   cd $BUILD_PATH
   cmake "$SOURCE_PATH/avs-device-sdk" \
+      $PI_HAT_FLAG \
       -DCMAKE_BUILD_TYPE=DEBUG \
       "${CMAKE_PLATFORM_SPECIFIC[@]}"
 

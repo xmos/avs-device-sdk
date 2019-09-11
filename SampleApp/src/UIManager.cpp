@@ -42,6 +42,7 @@ using namespace avsCommon::sdkInterfaces;
 using namespace settings;
 
 static const std::string VERSION = avsCommon::utils::sdkVersion::getCurrentVersion();
+std::string Button_state = "no_push";
 
 // clang-format off
 static const std::string ALEXA_WELCOME_MESSAGE =
@@ -567,12 +568,49 @@ void UIManager::printState() {
     } else if (m_connectionStatus == avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status::PENDING) {
         ConsolePrinter::prettyPrint("Connecting...");
     } else if (m_connectionStatus == avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status::CONNECTED) {
+        
+        
+        system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_DN ");
+        system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_UP ");
+        system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_ACTION ");
+        printf(" %d \n\n", system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_MUTE "));
+        
+        
+        
+        std::cout<<"avant  "<<Button_state<<std::endl;
+        int get_button_mute_ret = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_MUTE ");
+        std::cout<<"button  "<<get_button_mute_ret<<std::endl;
+        if (get_button_mute_ret==0) {
+            if (Button_state == "no_push") {
+                Button_state = "push" ;
+            }
+            
+        }
+        else if (get_button_mute_ret==256) {
+            if (Button_state == "push"){
+                Button_state = "no_push";
+                std::cout<<" MUTE "<<std::endl;
+                system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl CHANGE_MUTE_MIC ");
+            }  
+        } 
+        std::cout<<"apres  "<<Button_state<<std::endl;
+        
+	
         switch (m_dialogState) {
             case DialogUXState::IDLE:
                 ConsolePrinter::prettyPrint("Alexa is currently idle!");
+		
+//#ifdef PI_HAT_CTRL
+                system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl SET_LED_RGB 19 23 3");
+//#endif
                 return;
             case DialogUXState::LISTENING:
                 ConsolePrinter::prettyPrint("Listening...");
+//#ifdef PI_HAT_CTRL 
+                //system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_LED_RGB 1 15
+                system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl SET_LED_RGB 204 0 77");
+//#endif
+
                 return;
             case DialogUXState::EXPECTING:
                 ConsolePrinter::prettyPrint("Expecting...");
@@ -582,6 +620,9 @@ void UIManager::printState() {
                 return;
             case DialogUXState::SPEAKING:
                 ConsolePrinter::prettyPrint("Speaking...");
+//#ifdef PI_HAT_CTRL
+                system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl SET_LED_SPEAKING");
+//#endif
                 return;
             /*
              * This is an intermediate state after a SPEAK directive is completed. In the case of a speech burst the
@@ -650,6 +691,13 @@ void UIManager::onActiveDeviceDisconnected(const DeviceAttributes& deviceAttribu
         }
         ConsolePrinter::prettyPrint({"BLUETOOTH DEVICE DISCONNECTED", "Name: " + deviceAttributes.name, oss.str()});
     });
+}
+
+UIManager::~UIManager() {
+//#ifdef PI_HAT_CTRL
+    //Turn LED off
+    system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl SET_LED_RGB 0 0 0");
+//#endif
 }
 
 }  // namespace sampleApp
