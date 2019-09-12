@@ -56,7 +56,9 @@ bool ConsoleReader::read(const std::chrono::milliseconds timeout, char* data) {
 }
 
 void ConsoleReader::workerLoop() {
+    std::cout << "avant while read consolereader" <<std::endl;
     while (!m_shutDown) {
+        std::cout << "dans while read consolereader" <<std::endl;
         char tempChar;
         std::unique_lock<std::mutex> lock(m_mutex);
         if (m_waitOnEvent.wait_for(lock, READ_REQUEST_PENDING_TIMEOUT, [this] {

@@ -872,15 +872,15 @@ int main(int argc, char **argv) {
     }
 
     if (strcmp(argv[1], command_GET_BUT_VOL_DN) == 0) {
-        get_button_vol_dwn();
+        return get_button_vol_dwn();
     }
 
     if (strcmp(argv[1], command_GET_BUT_VOL_UP) == 0) {
-        get_button_vol_up();
+        return get_button_vol_up();
     }
 
     if (strcmp(argv[1], command_GET_BUT_ACTION) == 0) {
-        get_button_action();
+        return get_button_action();
     }
 
     if (strcmp(argv[1], command_SET_BOOT_SEL) == 0) {

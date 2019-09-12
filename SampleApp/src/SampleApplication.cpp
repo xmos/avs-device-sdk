@@ -242,6 +242,7 @@ SampleApplication::MediaPlayerRegistration::MediaPlayerRegistration(
 }
 
 SampleAppReturnCode SampleApplication::run() {
+    std::cout << "dans run Sample" <<std::endl;
     return m_userInputManager->run();
 }
 

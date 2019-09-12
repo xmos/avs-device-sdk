@@ -42,7 +42,7 @@ using namespace avsCommon::sdkInterfaces;
 using namespace settings;
 
 static const std::string VERSION = avsCommon::utils::sdkVersion::getCurrentVersion();
-std::string Button_state = "no_push";
+//std::string Button_state = "no_push";
 
 // clang-format off
 static const std::string ALEXA_WELCOME_MESSAGE =
@@ -570,30 +570,14 @@ void UIManager::printState() {
     } else if (m_connectionStatus == avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status::CONNECTED) {
         
         
-        system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_DN ");
-        system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_UP ");
-        system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_ACTION ");
-        printf(" %d \n\n", system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_MUTE "));
+        //system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_DN ");
+        //system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_UP ");
+        //system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_ACTION ");
+        //printf(" %d \n\n", system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_MUTE "));
         
         
         
-        std::cout<<"avant  "<<Button_state<<std::endl;
-        int get_button_mute_ret = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_MUTE ");
-        std::cout<<"button  "<<get_button_mute_ret<<std::endl;
-        if (get_button_mute_ret==0) {
-            if (Button_state == "no_push") {
-                Button_state = "push" ;
-            }
-            
-        }
-        else if (get_button_mute_ret==256) {
-            if (Button_state == "push"){
-                Button_state = "no_push";
-                std::cout<<" MUTE "<<std::endl;
-                system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl CHANGE_MUTE_MIC ");
-            }  
-        } 
-        std::cout<<"apres  "<<Button_state<<std::endl;
+        
         
 	
         switch (m_dialogState) {

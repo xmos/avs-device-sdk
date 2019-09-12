@@ -119,9 +119,11 @@ int main(int argc, char* argv[]) {
             ConsolePrinter::simplePrint("Failed to create to SampleApplication!");
             return SampleAppReturnCode::ERROR;
         }
+        std::cout << "avant run main" <<std::endl;
         returnCode = sampleApplication->run();
+        std::cout << "apres run main" <<std::endl;
         sampleApplication.reset();
     } while (SampleAppReturnCode::RESTART == returnCode);
-
+    std::cout << "apres while main" <<std::endl;
     return returnCode;
 }

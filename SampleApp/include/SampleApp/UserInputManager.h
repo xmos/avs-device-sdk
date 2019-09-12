@@ -78,6 +78,12 @@ private:
      * Implement speaker control options.
      */
     void controlSpeaker();
+    
+    /**
+     * Implement speaker control modified for buttons.
+     */
+    void controlSpeakerdecreasevolumebutton();
+    void controlSpeakerincreasevolumebutton();
 
 #ifdef ENABLE_PCC
     /**
