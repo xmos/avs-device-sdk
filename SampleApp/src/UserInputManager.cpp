@@ -27,8 +27,6 @@ namespace sampleApp {
 using namespace avsCommon::sdkInterfaces;
 using namespace avsCommon::sdkInterfaces::softwareInfo;
 
-//std::string Button_mute_state = "no_push";
-
 
 static const char HOLD = 'h';
 static const char TAP = 't';
@@ -124,6 +122,64 @@ UserInputManager::UserInputManager(
         m_restart{false} {
 }
 
+
+void UserInputManager::readButtonInput(char &Button_mute_state,char &Button_vl_dn_state,char &Button_vl_up_state,char &Button_action_state) {
+    /////////////////////////////////
+    int get_button_mute_ret = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_MUTE ");
+    if (get_button_mute_ret==0) {
+        if (Button_mute_state == (char)ButtonState::UNPUSH) {
+            Button_mute_state = (char)ButtonState::PUSH ;
+        }
+        
+    } else if (get_button_mute_ret==256) {
+        if (Button_mute_state == (char)ButtonState::PUSH){
+            Button_mute_state = (char)ButtonState::UNPUSH;
+            m_interactionManager->microphoneToggle();
+        }
+    } 
+    /////////////////////////////////
+    int get_button_vl_dn = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_DN ");
+    if (get_button_vl_dn==0) {
+        if (Button_vl_dn_state == (char)ButtonState::UNPUSH) {
+            Button_vl_dn_state = (char)ButtonState::PUSH;
+        }
+        
+    }else if (get_button_vl_dn==256) {
+        if (Button_vl_dn_state == (char)ButtonState::PUSH){
+            Button_vl_dn_state = (char)ButtonState::UNPUSH;
+            controlSpeakerdecreasevolumebutton();
+        }  
+    } 
+    /////////////////////////////////
+    int get_button_vl_up = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_UP ");
+    if (get_button_vl_up==0) {
+        if (Button_vl_up_state == (char)ButtonState::UNPUSH) {
+            Button_vl_up_state = (char)ButtonState::PUSH;
+        }
+        
+    }else if (get_button_vl_up==256) {
+        if (Button_vl_up_state == (char)ButtonState::PUSH){
+            Button_vl_up_state = (char)ButtonState::UNPUSH;
+            controlSpeakerincreasevolumebutton();
+        }  
+    } 
+    /////////////////////////////////
+    int get_button_action = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_ACTION ");
+    if (get_button_action==0) {
+        if (Button_action_state == (char)ButtonState::UNPUSH) {
+            Button_action_state = (char)ButtonState::PUSH;
+        }
+        
+    }else if (get_button_action==256) {
+        if (Button_action_state == (char)ButtonState::PUSH){
+            Button_action_state = (char)ButtonState::UNPUSH;
+            m_interactionManager->tap();
+        }  
+    } 
+    /////////////////////////////////
+}
+
+
 bool UserInputManager::readConsoleInput(char* input) {
     
     char Button_mute_state = (char)ButtonState::UNPUSH;
@@ -132,59 +188,9 @@ bool UserInputManager::readConsoleInput(char* input) {
     char Button_action_state = (char)ButtonState::UNPUSH;
     
     while (input && !m_restart) {
-        /////////////////////////////////
-        int get_button_mute_ret = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_MUTE ");
-        if (get_button_mute_ret==0) {
-            if (Button_mute_state == (char)ButtonState::UNPUSH) {
-                Button_mute_state = (char)ButtonState::PUSH ;
-            }
-            
-        } else if (get_button_mute_ret==256) {
-            if (Button_mute_state == (char)ButtonState::PUSH){
-                Button_mute_state = (char)ButtonState::UNPUSH;
-                m_interactionManager->microphoneToggle();
-            }
-        } 
-        /////////////////////////////////
-        int get_button_vl_dn = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_DN ");
-        if (get_button_vl_dn==0) {
-            if (Button_vl_dn_state == (char)ButtonState::UNPUSH) {
-                Button_vl_dn_state = (char)ButtonState::PUSH;
-            }
-            
-        }else if (get_button_vl_dn==256) {
-            if (Button_vl_dn_state == (char)ButtonState::PUSH){
-                Button_vl_dn_state = (char)ButtonState::UNPUSH;
-                controlSpeakerdecreasevolumebutton();
-            }  
-        } 
-        /////////////////////////////////
-        int get_button_vl_up = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_UP ");
-        if (get_button_vl_up==0) {
-            if (Button_vl_up_state == (char)ButtonState::UNPUSH) {
-                Button_vl_up_state = (char)ButtonState::PUSH;
-            }
-            
-        }else if (get_button_vl_up==256) {
-            if (Button_vl_up_state == (char)ButtonState::PUSH){
-                Button_vl_up_state = (char)ButtonState::UNPUSH;
-                controlSpeakerincreasevolumebutton();
-            }  
-        } 
-        /////////////////////////////////
-        int get_button_action = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_ACTION ");
-        if (get_button_action==0) {
-            if (Button_action_state == (char)ButtonState::UNPUSH) {
-                Button_action_state = (char)ButtonState::PUSH;
-            }
-            
-        }else if (get_button_action==256) {
-            if (Button_action_state == (char)ButtonState::PUSH){
-                Button_action_state = (char)ButtonState::UNPUSH;
-                m_interactionManager->tap();
-            }  
-        } 
-        /////////////////////////////////
+        
+        readButtonInput(Button_mute_state,Button_vl_dn_state,Button_vl_up_state,Button_action_state);
+        
         if (m_consoleReader->read(READ_CONSOLE_TIMEOUT, input)) {
             return true;
         }

@@ -73,6 +73,11 @@ private:
      * @return Returns @c true if a character is read from console.  @c false if m_restart flag is set.
      */
     bool readConsoleInput(char* input);
+    
+    /**
+     * Read the buttons.
+     */
+    void readButtonInput(char &Button_mute_state,char &Button_vl_dn_state,char &Button_vl_up_state,char &Button_action_state);
 
     /**
      * Implement speaker control options.
