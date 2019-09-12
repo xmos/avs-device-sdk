@@ -126,14 +126,9 @@ UserInputManager::UserInputManager(
 }
 
 bool UserInputManager::readConsoleInput(char* input) {
-    std::cout << "avant while readconsoleinput userinput" <<std::endl;
     while (input && !m_restart) {
-        std::cout << "dans while readconsoleinput userinput" <<std::endl;
-        
         ////////////////////////////////
-        
         int get_button_mute_ret = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_MUTE ");
-        std::cout<<"button  "<<get_button_mute_ret<<std::endl;
         if (get_button_mute_ret==0) {
             if (Button_state == "no_push") {
                 Button_state = "push" ;
@@ -143,14 +138,11 @@ bool UserInputManager::readConsoleInput(char* input) {
         else if (get_button_mute_ret==256) {
             if (Button_state == "push"){
                 Button_state = "no_push";
-                std::cout<<" TOGGLE_MUTE "<<std::endl;
                 m_interactionManager->microphoneToggle();
             }  
         } 
-        std::cout<<"apres  "<<Button_state<<std::endl;
         ////////////////////////////
         int get_button_vl_dn = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_DN ");
-        std::cout<<"button  "<<get_button_vl_dn<<std::endl;
         if (get_button_vl_dn==0) {
             if (Button_vl_dn_state == "no_push") {
                 Button_vl_dn_state = "push" ;
@@ -160,14 +152,11 @@ bool UserInputManager::readConsoleInput(char* input) {
         else if (get_button_vl_dn==256) {
             if (Button_vl_dn_state == "push"){
                 Button_vl_dn_state = "no_push";
-                std::cout<<" VOL_DOWN "<<std::endl;
                 controlSpeakerdecreasevolumebutton();
             }  
         } 
-        //////////////////////
-        std::cout<<"avant  "<<Button_vl_up_state<<std::endl;
+        //////////////////////;
         int get_button_vl_up = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_UP ");
-        std::cout<<"button  "<<get_button_vl_up<<std::endl;
         if (get_button_vl_up==0) {
             if (Button_vl_up_state == "no_push") {
                 Button_vl_up_state = "push" ;
@@ -177,13 +166,11 @@ bool UserInputManager::readConsoleInput(char* input) {
         else if (get_button_vl_up==256) {
             if (Button_vl_up_state == "push"){
                 Button_vl_up_state = "no_push";
-                std::cout<<" VOL_UP "<<std::endl;
                 controlSpeakerincreasevolumebutton();
             }  
         } 
          ////////////////////////////
         int get_button_action = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_ACTION ");
-        std::cout<<"button  "<<get_button_action<<std::endl;
         if (get_button_action==0) {
             if (Button_action_state == "no_push") {
                 Button_action_state = "push" ;
@@ -193,7 +180,6 @@ bool UserInputManager::readConsoleInput(char* input) {
         else if (get_button_action==256) {
             if (Button_action_state == "push"){
                 Button_action_state = "no_push";
-                std::cout<<" ACTION "<<std::endl;
                 m_interactionManager->tap();
             }  
         } 
@@ -201,25 +187,18 @@ bool UserInputManager::readConsoleInput(char* input) {
         if (m_consoleReader->read(READ_CONSOLE_TIMEOUT, input)) {
             return true;
         }
-        std::cout<<"avant  "<<Button_vl_up_state<<std::endl;
     }
     return false;
 }
 
 SampleAppReturnCode UserInputManager::run() {
     bool userTriggeredLogout = false;
-    std::cout << "avant begin userinput" <<std::endl;
     m_interactionManager->begin();
-    std::cout << "avant while userinput" <<std::endl;
     while (true) {
-        
-        std::cout << "dans while userinput" <<std::endl;
         char x;
         if (!readConsoleInput(&x)) {
-            std::cout << "dans read userinput" <<std::endl;
             break;
         }
-        std::cout << "apres read userinput" <<std::endl;
         x = ::tolower(x);
         if (x == QUIT) {
             break;
@@ -435,7 +414,6 @@ void UserInputManager::controlSpeakerdecreasevolumebutton() {
 #ifdef ENABLE_PCC
 void UserInputManager::controlPhone() {
     std::string callerId;
-
     m_interactionManager->callId();
     std::string callId;
     std::cin >> callId;

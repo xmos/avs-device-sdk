@@ -103,7 +103,7 @@ const char *command_SET_BOOT_SEL = "SET_BOOT_SEL";
 const char *command_SET_INT_INPUT = "SET_INT_INPUT";
 const char *command_GET_INT_N_IN = "GET_INT_N_IN";
 const char *command_SET_LED_SPEAKING = "SET_LED_SPEAKING";
-const char *command_CHANGE_MUTE_MIC = "CHANGE_MUTE_MIC";
+const char *command_TOGGLE_MUTE_MIC = "TOGGLE_MUTE_MIC";
 
 int file_id;
 
@@ -139,7 +139,7 @@ rgb hsl2rgb(hsl input);
 void set_led_hsl (hsl input);
 void parse_led_hsl (char **argv);
 void set_mute_mic(char **argv);
-void change_mute_mic();
+void toggle_mute_mic();
 void set_dac_reset(char **argv);
 void init_dac();
 int get_button_mute();
@@ -404,7 +404,7 @@ void set_mute_mic(char **argv){
 }
 
 
-void change_mute_mic(){
+void toggle_mute_mic(){
     // Setup I2C
     file_open();
     i2c_start(PCAL6416A_ADR);
@@ -416,14 +416,11 @@ void change_mute_mic(){
     //read_config_reg |= 0b00010000; // UNMUTE
     
     int read_config_reg_mute = read_config_reg>>4;
-    printf("MUTE %d", read_config_reg_mute);
     if (read_config_reg_mute % 2 == 1) {
         read_config_reg &= 0b11101111;
-        printf("MUTE");
     }
     else if ((read_config_reg_mute & 0x01) == 0) {
         read_config_reg |= 0b00010000;
-        printf("UNMUTE");
     }
     
     
@@ -542,13 +539,12 @@ int get_button_mute(){
     file_open();
     i2c_start(PCAL6416A_ADR);
     int read_input_port_reg_pair = i2c_read(PCAL6416A_input_port_reg_pair);
-    printf("port    %d", read_input_port_reg_pair);
     if (read_input_port_reg_pair % 2 == 0) {
-        printf("0 \n");
+        //printf("0 \n");
         return 0;
     }
     else if (read_input_port_reg_pair % 2 == 1) {
-        printf("1 \n");
+        //printf("1 \n");
         return 1;
     }
 }
@@ -562,11 +558,11 @@ int get_button_vol_dwn(){
     int read_input_port_reg_pair = i2c_read(PCAL6416A_input_port_reg_pair);
     read_input_port_reg_pair >>= 1;
     if (read_input_port_reg_pair % 2 == 0) {
-        printf("0 \n");
+        //printf("0 \n");
         return 0;
     }
     else if (read_input_port_reg_pair % 2 == 1) {
-        printf("1 \n");
+        //printf("1 \n");
         return 1;
     }
 }
@@ -581,11 +577,11 @@ int get_button_vol_up(){
     read_input_port_reg_pair >>= 3;
     
     if (read_input_port_reg_pair % 2 == 0) {
-        printf("0 \n");
+        //printf("0 \n");
         return 0;
     }
     else if (read_input_port_reg_pair % 2 == 1) {
-        printf("1 \n");
+        //printf("1 \n");
         return 1;
     }
 }
@@ -599,11 +595,11 @@ int get_button_action(){
     int read_input_port_reg_pair = i2c_read(PCAL6416A_input_port_reg_pair);
     read_input_port_reg_pair >>= 2;
     if (read_input_port_reg_pair % 2 == 0) {
-        printf("0 \n");
+        //printf("0 \n");
         return 0;
     }
     else if (read_input_port_reg_pair % 2 == 1) {
-        printf("1 \n");
+        //printf("1 \n");
         return 1;
     }
 }
@@ -848,8 +844,8 @@ int main(int argc, char **argv) {
         }
     }
     
-    if (strcmp(argv[1], command_CHANGE_MUTE_MIC) == 0) {
-        change_mute_mic();
+    if (strcmp(argv[1], command_TOGGLE_MUTE_MIC) == 0) {
+        toggle_mute_mic();
     }
 
 

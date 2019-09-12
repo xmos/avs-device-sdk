@@ -42,7 +42,6 @@ using namespace avsCommon::sdkInterfaces;
 using namespace settings;
 
 static const std::string VERSION = avsCommon::utils::sdkVersion::getCurrentVersion();
-//std::string Button_state = "no_push";
 
 // clang-format off
 static const std::string ALEXA_WELCOME_MESSAGE =
@@ -568,18 +567,6 @@ void UIManager::printState() {
     } else if (m_connectionStatus == avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status::PENDING) {
         ConsolePrinter::prettyPrint("Connecting...");
     } else if (m_connectionStatus == avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status::CONNECTED) {
-        
-        
-        //system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_DN ");
-        //system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_UP ");
-        //system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_ACTION ");
-        //printf(" %d \n\n", system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_MUTE "));
-        
-        
-        
-        
-        
-	
         switch (m_dialogState) {
             case DialogUXState::IDLE:
                 ConsolePrinter::prettyPrint("Alexa is currently idle!");
@@ -591,10 +578,8 @@ void UIManager::printState() {
             case DialogUXState::LISTENING:
                 ConsolePrinter::prettyPrint("Listening...");
 //#ifdef PI_HAT_CTRL 
-                //system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_LED_RGB 1 15
                 system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl SET_LED_RGB 204 0 77");
 //#endif
-
                 return;
             case DialogUXState::EXPECTING:
                 ConsolePrinter::prettyPrint("Expecting...");
