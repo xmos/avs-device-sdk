@@ -135,7 +135,9 @@ bool PortAudioMicrophoneWrapper::startStreamingMicrophoneData() {
         ACSDK_CRITICAL(LX("Failed to start PortAudio stream"));
         return false;
     }
+#ifdef PI_HAT_CTRL
     system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl SET_MUTE_MIC 0");
+#endif
     return true;
 }
 
@@ -146,7 +148,9 @@ bool PortAudioMicrophoneWrapper::stopStreamingMicrophoneData() {
         ACSDK_CRITICAL(LX("Failed to stop PortAudio stream"));
         return false;
     }
+#ifdef PI_HAT_CTRL
     system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl SET_MUTE_MIC 1");
+#endif
     return true;
 }
 

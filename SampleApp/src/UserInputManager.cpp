@@ -125,6 +125,7 @@ UserInputManager::UserInputManager(
 
 void UserInputManager::readButtonInput(char &Button_mute_state,char &Button_vl_dn_state,char &Button_vl_up_state,char &Button_action_state) {
     /////////////////////////////////
+#ifdef PI_HAT_CTRL
     int get_button_mute_ret = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_MUTE ");
     if (get_button_mute_ret==0) {
         if (Button_mute_state == (char)ButtonState::UNPUSH) {
@@ -137,7 +138,9 @@ void UserInputManager::readButtonInput(char &Button_mute_state,char &Button_vl_d
             m_interactionManager->microphoneToggle();
         }
     } 
+#endif
     /////////////////////////////////
+#ifdef PI_HAT_CTRL
     int get_button_vl_dn = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_DN ");
     if (get_button_vl_dn==0) {
         if (Button_vl_dn_state == (char)ButtonState::UNPUSH) {
@@ -150,7 +153,9 @@ void UserInputManager::readButtonInput(char &Button_mute_state,char &Button_vl_d
             controlSpeakerdecreasevolumebutton();
         }  
     } 
+#endif
     /////////////////////////////////
+#ifdef PI_HAT_CTRL
     int get_button_vl_up = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_UP ");
     if (get_button_vl_up==0) {
         if (Button_vl_up_state == (char)ButtonState::UNPUSH) {
@@ -163,7 +168,9 @@ void UserInputManager::readButtonInput(char &Button_mute_state,char &Button_vl_d
             controlSpeakerincreasevolumebutton();
         }  
     } 
+#endif
     /////////////////////////////////
+#ifdef PI_HAT_CTRL
     int get_button_action = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_ACTION ");
     if (get_button_action==0) {
         if (Button_action_state == (char)ButtonState::UNPUSH) {
@@ -176,20 +183,25 @@ void UserInputManager::readButtonInput(char &Button_mute_state,char &Button_vl_d
             m_interactionManager->tap();
         }  
     } 
+#endif
     /////////////////////////////////
 }
 
 
 bool UserInputManager::readConsoleInput(char* input) {
-    
+
+#ifdef PI_HAT_CTRL
     char Button_mute_state = (char)ButtonState::UNPUSH;
     char Button_vl_up_state = (char)ButtonState::UNPUSH;
     char Button_vl_dn_state = (char)ButtonState::UNPUSH;
     char Button_action_state = (char)ButtonState::UNPUSH;
-    
+#endif
+
     while (input && !m_restart) {
-        
+
+
         readButtonInput(Button_mute_state,Button_vl_dn_state,Button_vl_up_state,Button_action_state);
+
         
         if (m_consoleReader->read(READ_CONSOLE_TIMEOUT, input)) {
             return true;
