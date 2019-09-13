@@ -569,8 +569,7 @@ void UIManager::printState() {
     } else if (m_connectionStatus == avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status::CONNECTED) {
         switch (m_dialogState) {
             case DialogUXState::IDLE:
-                ConsolePrinter::prettyPrint("Alexa is currently idle!");
-		
+                ConsolePrinter::prettyPrint("Alexa is currently idle!");		
 #ifdef PI_HAT_CTRL
                 system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl SET_LED_RGB 19 23 3");
 #endif
