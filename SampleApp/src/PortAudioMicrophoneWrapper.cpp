@@ -136,7 +136,7 @@ bool PortAudioMicrophoneWrapper::startStreamingMicrophoneData() {
         return false;
     }
 #ifdef PI_HAT_CTRL
-    system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl SET_MUTE_MIC 0");
+    system("pi_hat_ctrl SET_MUTE_MIC 0");
 #endif
     return true;
 }
@@ -149,7 +149,7 @@ bool PortAudioMicrophoneWrapper::stopStreamingMicrophoneData() {
         return false;
     }
 #ifdef PI_HAT_CTRL
-    system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl SET_MUTE_MIC 1");
+    system("pi_hat_ctrl SET_MUTE_MIC 1");
 #endif
     return true;
 }

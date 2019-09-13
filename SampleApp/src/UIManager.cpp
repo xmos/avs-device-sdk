@@ -571,13 +571,13 @@ void UIManager::printState() {
             case DialogUXState::IDLE:
                 ConsolePrinter::prettyPrint("Alexa is currently idle!");		
 #ifdef PI_HAT_CTRL
-                system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl SET_LED_RGB 19 23 3");
+                system("pi_hat_ctrl SET_LED_RGB 19 23 3");
 #endif
                 return;
             case DialogUXState::LISTENING:
                 ConsolePrinter::prettyPrint("Listening...");
 #ifdef PI_HAT_CTRL 
-                system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl SET_LED_RGB 204 0 77");
+                system("pi_hat_ctrl SET_LED_RGB 204 0 77");
 #endif
                 return;
             case DialogUXState::EXPECTING:
@@ -589,7 +589,7 @@ void UIManager::printState() {
             case DialogUXState::SPEAKING:
                 ConsolePrinter::prettyPrint("Speaking...");
 #ifdef PI_HAT_CTRL
-                system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl SET_LED_SPEAKING");
+                system("pi_hat_ctrl SET_LED_SPEAKING");
 #endif
                 return;
             /*
@@ -664,7 +664,7 @@ void UIManager::onActiveDeviceDisconnected(const DeviceAttributes& deviceAttribu
 UIManager::~UIManager() {
 #ifdef PI_HAT_CTRL
     //Turn LED off
-    system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl SET_LED_RGB 0 0 0");
+    system("pi_hat_ctrl SET_LED_RGB 0 0 0");
 #endif
 }
 

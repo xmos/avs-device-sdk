@@ -125,7 +125,7 @@ UserInputManager::UserInputManager(
 void UserInputManager::readButtonInput(char &Button_mute_state,char &Button_vl_dn_state,char &Button_vl_up_state,char &Button_action_state) {
 
 #ifdef PI_HAT_CTRL
-    int get_button_mute_ret = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_MUTE ");
+    int get_button_mute_ret = system("pi_hat_ctrl GET_BUT_MUTE ");
     if (get_button_mute_ret==0) {
         if (Button_mute_state == (char)ButtonState::UNPUSH) {
             Button_mute_state = (char)ButtonState::PUSH ;
@@ -140,7 +140,9 @@ void UserInputManager::readButtonInput(char &Button_mute_state,char &Button_vl_d
 #endif
 
 #ifdef PI_HAT_CTRL
-    int get_button_vl_dn = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_DN ");
+    //int get_button_vl_dn = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_DN ");
+    int get_button_vl_dn = system("pi_hat_ctrl GET_BUT_VOL_DN ");
+
     if (get_button_vl_dn==0) {
         if (Button_vl_dn_state == (char)ButtonState::UNPUSH) {
             Button_vl_dn_state = (char)ButtonState::PUSH;
@@ -155,7 +157,7 @@ void UserInputManager::readButtonInput(char &Button_mute_state,char &Button_vl_d
 #endif
 
 #ifdef PI_HAT_CTRL
-    int get_button_vl_up = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_UP ");
+    int get_button_vl_up = system("pi_hat_ctrl GET_BUT_VOL_UP ");
     if (get_button_vl_up==0) {
         if (Button_vl_up_state == (char)ButtonState::UNPUSH) {
             Button_vl_up_state = (char)ButtonState::PUSH;
@@ -170,7 +172,7 @@ void UserInputManager::readButtonInput(char &Button_mute_state,char &Button_vl_d
 #endif
 
 #ifdef PI_HAT_CTRL
-    int get_button_action = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_ACTION ");
+    int get_button_action = system("pi_hat_ctrl GET_BUT_ACTION ");
     if (get_button_action==0) {
         if (Button_action_state == (char)ButtonState::UNPUSH) {
             Button_action_state = (char)ButtonState::PUSH;
