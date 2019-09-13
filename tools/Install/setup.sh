@@ -49,7 +49,8 @@ TEMP_CONFIG_FILE="$BUILD_PATH/Integration/tmp_AlexaClientSDKConfig.json"
 TEST_SCRIPT="$INSTALL_BASE/test.sh"
 LIB_SUFFIX="a"
 ANDROID_CONFIG_FILE=""
-PI_HAT_CTRL_PATH="$THIRD_PARTY_PATH/pi_hat_ctrl"
+
+PI_HAT_CTRL_PATH="$SOURCE_PATH/avs-device-sdk/ThirdParty/pi_hat_ctrl"
 PI_HAT_FLAG="-DPI_HAT_CTRL=ON"
 
 # Default device serial number if nothing is specified
