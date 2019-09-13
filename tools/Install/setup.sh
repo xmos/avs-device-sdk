@@ -233,11 +233,21 @@ then
     #cd $SOURCE_PATH
     #git clone --single-branch $CLONE_URL avs-device-sdk
   fi
+
+  echo
+  echo "==============> UPDATING BASHRC =============="
+  echo
   
+  echo >> ~/.bashrc
+  echo "# Add variables for XMOS RPI HAT" >> ~/.bashrc
+  sed -i '/pi_hat_ctrl/d' ~/.bashrc > /dev/null
+  echo "export PATH=$PATH:${PI_HAT_CTRL_PATH}" >> ~/.bashrc
+  sed -i '/PA_ALSA_PLUGHW/d' ~/.bashrc > /dev/null
+  echo "export PA_ALSA_PLUGHW=1" >> ~/.bashrc
+
   echo
   echo "==============> BUILDING PI HAT CONTROL =============="
   echo
-
   mkdir -p $PI_HAT_CTRL_PATH
   pushd $SOURCE_PATH/avs-device-sdk/ThirdParty/pi_hat_ctrl > /dev/null
       gcc pi_hat_ctrl.c -o $PI_HAT_CTRL_PATH/pi_hat_ctrl -lm
