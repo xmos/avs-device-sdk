@@ -577,7 +577,7 @@ void UIManager::printState() {
             case DialogUXState::LISTENING:
                 ConsolePrinter::prettyPrint("Listening...");
 #ifdef PI_HAT_CTRL 
-                system("pi_hat_ctrl SET_LED_RGB 204 0 77");
+                system("pi_hat_ctrl SET_LED_RGB 1 15 22");
 #endif
                 return;
             case DialogUXState::EXPECTING:
