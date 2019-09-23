@@ -59,9 +59,10 @@ static const char PHONE_CONTROL = 'a';
 #endif
 static constexpr char ENABLE = 'E';
 static constexpr char DISABLE = 'D';
+static const unsigned int VENDOR_ID=0x0572;  
+static const unsigned int PRODUCT_ID=0x1494; 
 
 enum class SettingsValues : char { LOCALE = '1', DO_NOT_DISTURB = '2' };
-enum class ButtonState : char { PUSH = '0' , UNPUSH = '1'};
 
 static const std::unordered_map<char, std::string> LOCALE_VALUES({{'1', "en-US"},
                                                                   {'2', "en-GB"},
@@ -110,6 +111,122 @@ std::unique_ptr<UserInputManager> UserInputManager::create(
     }
 
     return std::unique_ptr<UserInputManager>(new UserInputManager(interactionManager, consoleReader));
+}
+
+void xfer_complete(struct libusb_transfer *xfer)
+{
+	switch (xfer->status) {
+		case LIBUSB_TRANSFER_COMPLETED:
+			printf("saw interrupt!!. packet_size received = %d\n",xfer->actual_length);
+			for(int i=0; i<xfer->actual_length; i++)
+			{
+					printf("0x%x ",xfer->buffer[i]);
+			}
+			if (xfer->buffer[3] == 0x19) {
+                printf("TAP");
+				*((char *)xfer->user_data) = TAP;
+			}
+            //option mute
+             //else if ((xfer->buffer[3] == 0x1a)||(xfer->buffer[3] == 0x1b)) {
+                //printf("MIC_TOGGLE");
+				//*((char *)xfer->user_data) = MIC_TOGGLE;
+			//}
+            
+			printf("\n");
+			break;
+		case LIBUSB_TRANSFER_TIMED_OUT:
+			// This just means no buttons were pressed
+			// Do nothing
+			break;
+		default:
+			printf("Unknown transfer error!\n");
+			break;
+	}
+
+	// Re-submit
+	assert(libusb_submit_transfer(xfer) == 0);
+}
+
+void UserInputManager::init_usb(char *input)
+{
+  int r = 1; 
+
+  int ret = libusb_init(NULL);
+  if (ret < 0) {
+    fprintf(stderr, "failed to initialise libusb\n");
+    exit(1);
+  }
+
+  libusb_device **devs = NULL;
+  //int num_dev = libusb_get_device_list(NULL, &devs);
+
+  //libusb_device_handle *devh = NULL;
+  //for (int i = 0; i < num_dev; i++) {
+    //struct libusb_device_descriptor desc;
+    //libusb_get_device_descriptor(devs[i], &desc);
+    //if (desc.idVendor == VENDOR_ID && desc.idProduct == PRODUCT_ID) {
+      //dev = devs[i];
+      //break;
+    //}
+  //}
+  devh = libusb_open_device_with_vid_pid(NULL, VENDOR_ID, PRODUCT_ID);
+
+  //if (dev == NULL) {
+    //fprintf(stderr, "could not find device\n");
+    //exit(1);
+  //}
+  //r = libusb_open(dev, &devh);
+  
+  //if (r < 0) {
+  if (devh == NULL) {
+    fprintf(stderr, "failed to open device. Ensure adequate permissions, error = %d\n", r);
+    exit(1);
+  }
+
+  libusb_free_device_list(devs, 1);
+
+  if (libusb_kernel_driver_active(devh, 3)) {
+     r = libusb_detach_kernel_driver(devh, 3);
+  }
+  if (libusb_kernel_driver_active(devh, 4)) {
+     r = libusb_detach_kernel_driver(devh, 4);      
+  }
+     if(r < 0)
+     {
+         fprintf(stderr, "libusb_detach_kernel_driver error %d\n", r); 
+     }
+     
+     int config; 
+     r = libusb_get_configuration(devh, &config);
+     if (r < 0) { 
+         fprintf(stderr, "libusb_get_configuration error %d\n", r); 
+     } 
+     printf("libusb_get_configuration returned config %d\n",config);
+
+     /*r = libusb_set_configuration(devh, 1); 
+     if (r < 0) { 
+         fprintf(stderr, "libusb_set_configuration error %d\n", r); 
+     } 
+     printf("Successfully set usb configuration 1\n");*/
+     r = libusb_claim_interface(devh, 3); 
+     if (r < 0) { 
+         fprintf(stderr, "libusb_claim_interface 3 error %d\n", r); 
+     } 
+     r = libusb_claim_interface(devh, 4); 
+     if (r < 0) { 
+         fprintf(stderr, "libusb_claim_interface 4 error %d\n", r); 
+     } 
+     printf("Successfully claimed interface\n"); 
+ 
+
+	 xfer = libusb_alloc_transfer(0);
+	 assert(xfer != NULL);
+	 libusb_fill_interrupt_transfer(xfer, devh, 0x83, 
+					 recv_packet, 64, 
+					 &xfer_complete, 
+					 (void *)input, 50);
+	 assert(libusb_submit_transfer(xfer) == 0);
+	
 }
 
 UserInputManager::UserInputManager(
@@ -191,17 +308,20 @@ void UserInputManager::readButtonInput(char &Button_mute_state,char &Button_vl_d
 
 bool UserInputManager::readConsoleInput(char* input) {
 
-#ifdef PI_HAT_CTRL
-    char Button_mute_state = (char)ButtonState::UNPUSH;
-    char Button_vl_up_state = (char)ButtonState::UNPUSH;
-    char Button_vl_dn_state = (char)ButtonState::UNPUSH;
-    char Button_action_state = (char)ButtonState::UNPUSH;
-#endif
-
     while (input && !m_restart) {
 
         readButtonInput(Button_mute_state,Button_vl_dn_state,Button_vl_up_state,Button_action_state);
 
+        //*input = '\0';
+        //if(libusb_handle_events_completed(NULL, NULL) != 0)
+        //{
+            //printf("you're dead\n");
+            //break;
+        //}
+        //if (*input != '\0') {
+            //return true;
+        //}
+        
         if (m_consoleReader->read(READ_CONSOLE_TIMEOUT, input)) {
             return true;
         }
@@ -212,8 +332,10 @@ bool UserInputManager::readConsoleInput(char* input) {
 SampleAppReturnCode UserInputManager::run() {
     bool userTriggeredLogout = false;
     m_interactionManager->begin();
+    char x;
+    //init_usb(&x);
     while (true) {
-        char x;
+        printf("call events_completed\n");
         if (!readConsoleInput(&x)) {
             break;
         }
@@ -352,6 +474,7 @@ SampleAppReturnCode UserInputManager::run() {
             m_interactionManager->errorValue();
         }
     }
+    printf("out of run loop\n");
     if (!userTriggeredLogout && m_restart) {
         return SampleAppReturnCode::RESTART;
     }

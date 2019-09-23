@@ -47,6 +47,7 @@ target_link_libraries(SampleApp
     SQLiteStorage
     ESP
     EqualizerImplementations
+    usb-1.0
     "${PORTAUDIO_LIB_PATH}")
 
 if (PCC)
