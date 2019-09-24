@@ -59,6 +59,8 @@ static const char PHONE_CONTROL = 'a';
 #endif
 static constexpr char ENABLE = 'E';
 static constexpr char DISABLE = 'D';
+static const unsigned int VENDOR_ID=0x0572;  
+static const unsigned int PRODUCT_ID=0x1494; 
 
 enum class SettingsValues : char { LOCALE = '1', DO_NOT_DISTURB = '2' };
 
@@ -111,6 +113,90 @@ std::unique_ptr<UserInputManager> UserInputManager::create(
     return std::unique_ptr<UserInputManager>(new UserInputManager(interactionManager, consoleReader));
 }
 
+void xfer_complete(struct libusb_transfer *xfer)
+{
+	switch (xfer->status) {
+		case LIBUSB_TRANSFER_COMPLETED:
+			//for(int i=0; i<xfer->actual_length; i++)
+			//{
+					//printf("0x%x ",xfer->buffer[i]);
+			//}
+			if (xfer->buffer[3] == 0x19) {
+				*((char *)xfer->user_data) = TAP;
+			}
+            //option mute
+             //else if ((xfer->buffer[3] == 0x1a)||(xfer->buffer[3] == 0x1b)) {
+                //printf("MIC_TOGGLE");
+				//*((char *)xfer->user_data) = MIC_TOGGLE;
+			//}
+			break;
+		case LIBUSB_TRANSFER_TIMED_OUT:
+			// This just means no buttons were pressed
+			// Do nothing
+			break;
+		default:
+			printf("Unknown transfer error!\n");
+			break;
+	}
+
+	// Re-submit
+	assert(libusb_submit_transfer(xfer) == 0);
+}
+
+void UserInputManager::init_usb(char *input)
+{
+    int r = 1; 
+
+    int ret = libusb_init(NULL);
+
+    if (ret < 0) {
+        fprintf(stderr, "failed to initialise libusb\n");
+        exit(1);
+    }
+
+    libusb_device **devs = NULL;
+
+    devh = libusb_open_device_with_vid_pid(NULL, VENDOR_ID, PRODUCT_ID);
+
+    if (devh == NULL) {
+        fprintf(stderr, "failed to open device. Ensure adequate permissions, error = %d\n", r);
+        exit(1);
+    }
+
+    libusb_free_device_list(devs, 1);
+
+    if (libusb_kernel_driver_active(devh, 3)) {
+        r = libusb_detach_kernel_driver(devh, 3);
+    }
+    if (libusb_kernel_driver_active(devh, 4)) {
+        r = libusb_detach_kernel_driver(devh, 4);      
+    }
+    if(r < 0){
+        fprintf(stderr, "libusb_detach_kernel_driver error %d\n", r); 
+    }
+
+    int config; 
+    r = libusb_get_configuration(devh, &config);
+    if (r < 0) { 
+        fprintf(stderr, "libusb_get_configuration error %d\n", r); 
+    } 
+
+    r = libusb_claim_interface(devh, 3); 
+    if (r < 0) { 
+        fprintf(stderr, "libusb_claim_interface 3 error %d\n", r); 
+    } 
+    r = libusb_claim_interface(devh, 4); 
+    if (r < 0) { 
+        fprintf(stderr, "libusb_claim_interface 4 error %d\n", r); 
+    } 
+    
+    xfer = libusb_alloc_transfer(0);
+    assert(xfer != NULL);
+    libusb_fill_interrupt_transfer(xfer, devh, 0x83, recv_packet, 64, &xfer_complete, (void *)input, 20);
+    assert(libusb_submit_transfer(xfer) == 0);
+
+}
+
 UserInputManager::UserInputManager(
     std::shared_ptr<InteractionManager> interactionManager,
     std::shared_ptr<ConsoleReader> consoleReader) :
@@ -120,8 +206,90 @@ UserInputManager::UserInputManager(
         m_restart{false} {
 }
 
+
+void UserInputManager::readButtonInput(char &Button_mute_state,char &Button_vl_dn_state,char &Button_vl_up_state,char &Button_action_state) {
+
+#ifdef PI_HAT_CTRL
+    int get_button_mute_ret = system("pi_hat_ctrl GET_BUT_MUTE ");
+    if (get_button_mute_ret==0) {
+        if (Button_mute_state == (char)ButtonState::UNPUSH) {
+            Button_mute_state = (char)ButtonState::PUSH ;
+            m_interactionManager->microphoneToggle();
+        }
+        
+    } else if (get_button_mute_ret==256) {
+        if (Button_mute_state == (char)ButtonState::PUSH){
+            Button_mute_state = (char)ButtonState::UNPUSH;
+        }
+    } 
+#endif
+
+#ifdef PI_HAT_CTRL
+    //int get_button_vl_dn = system("/home/pi/avs-device-sdk/ThirdParty/pi_hat_ctrl/pi_hat_ctrl GET_BUT_VOL_DN ");
+    int get_button_vl_dn = system("pi_hat_ctrl GET_BUT_VOL_DN ");
+
+    if (get_button_vl_dn==0) {
+        if (Button_vl_dn_state == (char)ButtonState::UNPUSH) {
+            Button_vl_dn_state = (char)ButtonState::PUSH;
+            controlSpeakerDecreaseVolumeButton();
+        }
+        
+    }else if (get_button_vl_dn==256) {
+        if (Button_vl_dn_state == (char)ButtonState::PUSH){
+            Button_vl_dn_state = (char)ButtonState::UNPUSH;
+        }  
+    } 
+#endif
+
+#ifdef PI_HAT_CTRL
+    int get_button_vl_up = system("pi_hat_ctrl GET_BUT_VOL_UP ");
+    if (get_button_vl_up==0) {
+        if (Button_vl_up_state == (char)ButtonState::UNPUSH) {
+            Button_vl_up_state = (char)ButtonState::PUSH;
+            controlSpeakerIncreaseVolumeButton();
+        }
+        
+    }else if (get_button_vl_up==256) {
+        if (Button_vl_up_state == (char)ButtonState::PUSH){
+            Button_vl_up_state = (char)ButtonState::UNPUSH;
+        }  
+    } 
+#endif
+
+#ifdef PI_HAT_CTRL
+    int get_button_action = system("pi_hat_ctrl GET_BUT_ACTION ");
+    if (get_button_action==0) {
+        if (Button_action_state == (char)ButtonState::UNPUSH) {
+            Button_action_state = (char)ButtonState::PUSH;
+            m_interactionManager->tap();
+        }
+        
+    }else if (get_button_action==256) {
+        if (Button_action_state == (char)ButtonState::PUSH){
+            Button_action_state = (char)ButtonState::UNPUSH;
+        }  
+    } 
+#endif
+
+}
+
+
 bool UserInputManager::readConsoleInput(char* input) {
+
     while (input && !m_restart) {
+
+        readButtonInput(Button_mute_state,Button_vl_dn_state,Button_vl_up_state,Button_action_state);
+
+        *input = '\0';
+        if(libusb_handle_events_completed(NULL, NULL) != 0)
+        {
+            printf("you're dead\n");
+            break;
+        }
+        if (*input != '\0') {
+            return true;
+        }
+        
         if (m_consoleReader->read(READ_CONSOLE_TIMEOUT, input)) {
             return true;
         }
@@ -132,8 +300,9 @@ bool UserInputManager::readConsoleInput(char* input) {
 SampleAppReturnCode UserInputManager::run() {
     bool userTriggeredLogout = false;
     m_interactionManager->begin();
+    char x;
+    init_usb(&x);
     while (true) {
-        char x;
         if (!readConsoleInput(&x)) {
             break;
         }
@@ -327,10 +496,31 @@ void UserInputManager::controlSpeaker() {
     }
 }
 
+
+void UserInputManager::controlSpeakerIncreaseVolumeButton() {
+    char speakerChoice = '1';
+    if (SPEAKER_TYPES.count(speakerChoice) == 0) {
+        m_interactionManager->errorValue();
+    } else {
+        SpeakerInterface::Type speaker = SPEAKER_TYPES.at(speakerChoice);
+        m_interactionManager->adjustVolume(speaker, INCREASE_VOLUME);
+    }
+}
+
+void UserInputManager::controlSpeakerDecreaseVolumeButton() {
+    char speakerChoice = '1';
+    if (SPEAKER_TYPES.count(speakerChoice) == 0) {
+        m_interactionManager->errorValue();
+    } else {
+        SpeakerInterface::Type speaker = SPEAKER_TYPES.at(speakerChoice);
+        m_interactionManager->adjustVolume(speaker, DECREASE_VOLUME);
+    }
+}
+
+
 #ifdef ENABLE_PCC
 void UserInputManager::controlPhone() {
     std::string callerId;
-
     m_interactionManager->callId();
     std::string callId;
     std::cin >> callId;

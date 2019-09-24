@@ -252,7 +252,7 @@ rgb hsv2rgb(hsv input){
             out.red = C; out.green = 0.0; out.blue = X;
             break;
     }
-       out.red = out.red + m;
+    out.red = out.red + m;
     out.green = out.green + m;
     out.blue = out.blue + m;
 
@@ -330,7 +330,7 @@ rgb hsl2rgb(hsl input){
             break;
        }
 
-       out.red = out.red + m;
+    out.red = out.red + m;
     out.green = out.green + m;
     out.blue = out.blue + m;
 
@@ -504,11 +504,9 @@ int get_button_mute(){
     i2c_start(PCAL6416A_ADR);
     int read_input_port_reg_pair = i2c_read(PCAL6416A_input_port_reg_pair);
     if (read_input_port_reg_pair % 2 == 0) {
-        printf("0 \n");
         return 0;
     }
     else if (read_input_port_reg_pair % 2 == 1) {
-        printf("1 \n");
         return 1;
     }
 }
@@ -522,11 +520,9 @@ int get_button_vol_dwn(){
     int read_input_port_reg_pair = i2c_read(PCAL6416A_input_port_reg_pair);
     read_input_port_reg_pair >>= 1;
     if (read_input_port_reg_pair % 2 == 0) {
-        printf("0 \n");
         return 0;
     }
     else if (read_input_port_reg_pair % 2 == 1) {
-        printf("1 \n");
         return 1;
     }
 }
@@ -540,11 +536,9 @@ int get_button_vol_up(){
     int read_input_port_reg_pair = i2c_read(PCAL6416A_input_port_reg_pair);
     read_input_port_reg_pair >>= 3;
     if (read_input_port_reg_pair % 2 == 0) {
-        printf("0 \n");
         return 0;
     }
     else if (read_input_port_reg_pair % 2 == 1) {
-        printf("1 \n");
         return 1;
     }
 }
@@ -558,11 +552,9 @@ int get_button_action(){
     int read_input_port_reg_pair = i2c_read(PCAL6416A_input_port_reg_pair);
     read_input_port_reg_pair >>= 2;
     if (read_input_port_reg_pair % 2 == 0) {
-        printf("0 \n");
         return 0;
     }
     else if (read_input_port_reg_pair % 2 == 1) {
-        printf("1 \n");
         return 1;
     }
 }
@@ -822,19 +814,19 @@ int main(int argc, char **argv) {
     }
 
     if (strcmp(argv[1], command_GET_BUT_MUTE) == 0) {
-        get_button_mute();
+        return get_button_mute();
     }
 
     if (strcmp(argv[1], command_GET_BUT_VOL_DN) == 0) {
-        get_button_vol_dwn();
+        return get_button_vol_dwn();
     }
 
     if (strcmp(argv[1], command_GET_BUT_VOL_UP) == 0) {
-        get_button_vol_up();
+        return get_button_vol_up();
     }
 
     if (strcmp(argv[1], command_GET_BUT_ACTION) == 0) {
-        get_button_action();
+        return get_button_action();
     }
 
     if (strcmp(argv[1], command_SET_BOOT_SEL) == 0) {

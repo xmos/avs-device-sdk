@@ -1,5 +1,7 @@
 add_subdirectory("Authorization")
 
+set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -latomic")
+
 if ((PORTAUDIO AND GSTREAMER_MEDIA_PLAYER) OR (ANDROID_MEDIA_PLAYER AND ANDROID_MICROPHONE))
     cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
     project(SampleApp LANGUAGES CXX)

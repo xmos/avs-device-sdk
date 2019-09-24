@@ -122,6 +122,5 @@ int main(int argc, char* argv[]) {
         returnCode = sampleApplication->run();
         sampleApplication.reset();
     } while (SampleAppReturnCode::RESTART == returnCode);
-
     return returnCode;
 }

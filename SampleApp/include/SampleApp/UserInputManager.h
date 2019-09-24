@@ -24,6 +24,10 @@
 #include "ConsoleReader.h"
 #include "InteractionManager.h"
 #include "SampleApplicationReturnCodes.h"
+#include <libusb-1.0/libusb.h> 
+#include <assert.h>
+
+enum class ButtonState : char { PUSH = '0' , UNPUSH = '1'};
 
 namespace alexaClientSDK {
 namespace sampleApp {
@@ -73,11 +77,22 @@ private:
      * @return Returns @c true if a character is read from console.  @c false if m_restart flag is set.
      */
     bool readConsoleInput(char* input);
+    
+    /**
+     * Read the buttons.
+     */
+    void readButtonInput(char &Button_mute_state,char &Button_vl_dn_state,char &Button_vl_up_state,char &Button_action_state);
 
     /**
      * Implement speaker control options.
      */
     void controlSpeaker();
+    
+    /**
+     * Implement speaker control modified for buttons.
+     */
+    void controlSpeakerDecreaseVolumeButton();
+    void controlSpeakerIncreaseVolumeButton();
 
 #ifdef ENABLE_PCC
     /**
@@ -117,6 +132,8 @@ private:
         CapabilitiesObserverInterface::Error newError) override;
     /// @}
 
+    void init_usb(char *input);
+
     /// The main interaction manager that interfaces with the SDK.
     std::shared_ptr<InteractionManager> m_interactionManager;
 
@@ -129,6 +146,17 @@ private:
 
     /// Flag to indicate that the @c run() should stop and return @c SampleAppReturnCode::RESTART.
     std::atomic_bool m_restart;
+    
+    struct libusb_transfer *xfer = NULL;
+    struct libusb_device_handle *devh = NULL;  
+    unsigned char recv_packet[64] = {0};
+    
+    #ifdef PI_HAT_CTRL
+    char Button_mute_state = (char)ButtonState::UNPUSH;
+    char Button_vl_up_state = (char)ButtonState::UNPUSH;
+    char Button_vl_dn_state = (char)ButtonState::UNPUSH;
+    char Button_action_state = (char)ButtonState::UNPUSH;
+    #endif
 };
 
 }  // namespace sampleApp

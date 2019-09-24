@@ -58,7 +58,10 @@ TEST_SCRIPT="$INSTALL_BASE/test.sh"
 LIB_SUFFIX="a"
 ANDROID_CONFIG_FILE=""
 
+#PI_HAT_CTRL_PATH="$SOURCE_PATH/avs-device-sdk/ThirdParty/pi_hat_ctrl"
 PI_HAT_CTRL_PATH="$THIRD_PARTY_PATH/pi_hat_ctrl"
+
+PI_HAT_FLAG="-DPI_HAT_CTRL=ON"
 ALIASES="$HOME/.bash_aliases"
 
 # Default value for XMOS device
@@ -306,6 +309,10 @@ then
     echo "==============> CLONING SDK =============="
     echo
 
+<<<<<<< HEAD
+    #cd $SOURCE_PATH
+    #git clone --single-branch $CLONE_URL avs-device-sdk
+=======
     cd $SOURCE_PATH
     git clone -b $XMOS_TAG $CLONE_URL
     if [ $XMOS_DEVICE = "xvf3510" ]
@@ -319,7 +326,27 @@ then
       gcc pi_hat_ctrl.c -o $PI_HAT_CTRL_PATH/pi_hat_ctrl -lm
       popd > /dev/null
     fi
+>>>>>>> xmos/master
   fi
+
+  echo
+  echo "==============> UPDATING BASHRC =============="
+  echo
+  
+  echo >> ~/.bashrc
+  echo "# Add variables for XMOS RPI HAT" >> ~/.bashrc
+  sed -i '/pi_hat_ctrl/d' ~/.bashrc > /dev/null
+  echo "export PATH=$PATH:${PI_HAT_CTRL_PATH}" >> ~/.bashrc
+  sed -i '/PA_ALSA_PLUGHW/d' ~/.bashrc > /dev/null
+  echo "export PA_ALSA_PLUGHW=1" >> ~/.bashrc
+
+  echo
+  echo "==============> BUILDING PI HAT CONTROL =============="
+  echo
+  mkdir -p $PI_HAT_CTRL_PATH
+  pushd $SOURCE_PATH/avs-device-sdk/ThirdParty/pi_hat_ctrl > /dev/null
+      gcc pi_hat_ctrl.c -o $PI_HAT_CTRL_PATH/pi_hat_ctrl -lm
+      popd > /dev/null
 
   # make the SDK
   echo
