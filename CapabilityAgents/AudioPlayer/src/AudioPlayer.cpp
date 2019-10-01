@@ -14,6 +14,7 @@
  */
 
 /// @file AudioPlayer.cpp
+#include <algorithm>
 
 #include "AudioPlayer/AudioPlayer.h"
 
@@ -196,13 +197,12 @@ void AudioPlayer::cancelDirective(std::shared_ptr<DirectiveInfo> info) {
         ACSDK_DEBUG(LX("cancelDirective").d("name", info->directive->getName()));
         auto messageId = info->directive->getMessageId();
         m_executor.submit([this, messageId] {
-            for (auto it = m_preHandlePlayInfoList.begin(); it != m_preHandlePlayInfoList.end(); ) {
-                if (messageId == it->get()->messageId) {
-                    it = m_preHandlePlayInfoList.erase(it);
-                } else {
-                    ++it;
-                }
-            }
+            m_preHandlePlayInfoList.erase(
+                std::remove_if(
+                    m_preHandlePlayInfoList.begin(),
+                    m_preHandlePlayInfoList.end(),
+                    [messageId](std::shared_ptr<PlayDirectiveInfo> info) { return messageId == info->messageId; }),
+                m_preHandlePlayInfoList.end());
         });
     }
 }
