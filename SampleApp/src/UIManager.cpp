@@ -579,7 +579,7 @@ void UIManager::printState() {
                 ConsolePrinter::prettyPrint("Listening...");
 #ifdef PI_HAT_CTRL
                 system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_LED_RGB 1 15 22");
-    system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_GPIO 0 1");
+                system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_GPIO 0 1");
 #endif
                 return;
             case DialogUXState::EXPECTING:
@@ -592,7 +592,7 @@ void UIManager::printState() {
                 ConsolePrinter::prettyPrint("Speaking...");
 #ifdef PI_HAT_CTRL
                 system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_LED_SPEAKING");
-    system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_GPIO 0 0");
+                system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_GPIO 0 0");
 #endif
                 return;
             /*

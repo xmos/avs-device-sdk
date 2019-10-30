@@ -97,8 +97,8 @@ const char *command_SET_BOOT_SEL = "SET_BOOT_SEL";
 const char *command_SET_INT_INPUT = "SET_INT_INPUT";
 const char *command_GET_INT_N_IN = "GET_INT_N_IN";
 const char *command_SET_LED_SPEAKING = "SET_LED_SPEAKING";
-const char *command_INIT_EXTERNAL_GPIO = "INIT_EXTERNAL_GPIO";
-const char *command_SET_EXTERNAL_GPIO = "SET_EXTERNAL_GPIO";
+const char *command_INIT_GPIO = "INIT_GPIO";
+const char *command_SET_GPIO = "SET_GPIO";
 
 int file_id;
 
@@ -894,7 +894,7 @@ int main(int argc, char **argv) {
         set_led_speaking();
     }
 
-    if (strcmp(argv[1], command_INIT_EXTERNAL_GPIO) == 0) {
+    if (strcmp(argv[1], command_INIT_GPIO) == 0) {
         if (argc != 2) {
             printf("Command '%s' invalid \n", argv[1]);
             printf("This control has no arguments\n");
@@ -904,7 +904,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (strcmp(argv[1], command_SET_EXTERNAL_GPIO) == 0) {
+    if (strcmp(argv[1], command_SET_GPIO) == 0) {
         if (argc != 4) {
             printf("Command '%s' invalid \n", argv[1]);
             printf("This control has 2 arguments : arg 1: GPIO pin : arg 2 : [0-1] (on or off): . Ex : ./[caller] SET_EXTERNAL_GPIO 11 0 \n");
