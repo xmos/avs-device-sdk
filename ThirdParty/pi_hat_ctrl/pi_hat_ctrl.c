@@ -96,6 +96,7 @@ const char *command_GET_BUT_ACTION = "GET_BUT_ACTION";
 const char *command_SET_BOOT_SEL = "SET_BOOT_SEL";
 const char *command_SET_INT_INPUT = "SET_INT_INPUT";
 const char *command_GET_INT_N_IN = "GET_INT_N_IN";
+const char *command_SET_LED_SPEAKING = "SET_LED_SPEAKING";
 const char *command_INIT_EXTERNAL_GPIO = "INIT_EXTERNAL_GPIO";
 const char *command_SET_EXTERNAL_GPIO = "SET_EXTERNAL_GPIO";
 
@@ -173,7 +174,7 @@ void init_gpio()
 void set_gpio(int pin, int state)
 {
     init_gpio();
-    pin_mode(pin, OUTPUT);
+    pinMode(pin, OUTPUT);
     digitalWrite(pin, state);
 }
 
