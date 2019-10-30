@@ -317,7 +317,7 @@ then
 
       mkdir -p $PI_HAT_CTRL_PATH
       pushd $SOURCE_PATH/avs-device-sdk/ThirdParty/pi_hat_ctrl > /dev/null
-      gcc pi_hat_ctrl.c -o $PI_HAT_CTRL_PATH/pi_hat_ctrl -lm
+      gcc pi_hat_ctrl.c -o $PI_HAT_CTRL_PATH/pi_hat_ctrl -lm -lwiringPi
       popd > /dev/null
     fi
   fi

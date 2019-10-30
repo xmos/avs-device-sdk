@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <wiringPi.h>
 
 // DATA VALUES
 
@@ -82,6 +83,8 @@ char data_0xD4 = (char)0xD4;
 #define TLV320DAC3101_spkl_drvr_reg 0x2A // Register 42 - Left class-D speaker driver
 #define TLV320DAC3101_spkr_drvr_reg 0x2B // Register 43 - Right class-D speaker driver
 
+// External LED GPIO
+#define EXTERNAL_LED_GPIO   11
 
 const char *command_SET_LED_RGB = "SET_LED_RGB";
 const char *command_SET_LED_HSV = "SET_LED_HSV";
@@ -96,7 +99,8 @@ const char *command_GET_BUT_ACTION = "GET_BUT_ACTION";
 const char *command_SET_BOOT_SEL = "SET_BOOT_SEL";
 const char *command_SET_INT_INPUT = "SET_INT_INPUT";
 const char *command_GET_INT_N_IN = "GET_INT_N_IN";
-const char *command_SET_LED_SPEAKING = "SET_LED_SPEAKING";
+const char *command_INIT_EXTERNAL_GPIO = "INIT_EXTERNAL_GPIO";
+const char *command_SET_EXTERNAL_GPIO = "SET_EXTERNAL_GPIO";
 
 int file_id;
 
@@ -142,6 +146,11 @@ int boot_sel(char **argv);
 int int_input(char **argv);
 int get_int_n_in();
 void set_led_speaking();
+void init_gpio();
+void parse_gpio(char **argv);
+void set_gpio(int pin, int state);
+
+static int gpio_initialized = 0;
 
 void file_open(){
     file_id = open("/dev/i2c-1", O_RDWR);
@@ -155,6 +164,28 @@ void i2c_stop(){
     close (file_id);
 }
 
+void init_gpio()
+{
+    if( gpio_initialized == 0)
+    {
+        wiringPiSetup();
+        gpio_initialized = 1;
+    }
+}
+
+void set_gpio(int pin, int state)
+{
+    init_gpio();
+    pin_mode(pin, OUTPUT);
+    digitalWrite(pin, state);
+}
+
+void parse_gpio(char **argv)
+{
+    int pin = strtod(argv[2], NULL);
+    int state = strtod(argv[3], NULL);
+    set_gpio(pin, state);
+}
 
 static inline int i2c_smbus_access (int fd, char rw, uint8_t command, int size, union i2c_smbus_data *data)
 {
@@ -863,6 +894,26 @@ int main(int argc, char **argv) {
 
     if (strcmp(argv[1], command_SET_LED_SPEAKING) == 0) {
         set_led_speaking();
+    }
+
+    if (strcmp(argv[1], command_INIT_EXTERNAL_GPIO) == 0) {
+        if (argc != 2) {
+            printf("Command '%s' invalid \n", argv[1]);
+            printf("This control has no arguments\n");
+          }
+        else {
+            init_gpio();
+        }
+    }
+
+    if (strcmp(argv[1], command_SET_EXTERNAL_GPIO) == 0) {
+        if (argc != 4) {
+            printf("Command '%s' invalid \n", argv[1]);
+            printf("This control has 2 arguments : arg 1: GPIO pin : arg 2 : [0-1] (on or off): . Ex : ./[caller] SET_EXTERNAL_GPIO 11 0 \n");
+          }
+        else {
+            parse_gpio(argv);
+        }
     }
     return(0);
 }
