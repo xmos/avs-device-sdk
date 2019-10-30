@@ -83,9 +83,6 @@ char data_0xD4 = (char)0xD4;
 #define TLV320DAC3101_spkl_drvr_reg 0x2A // Register 42 - Left class-D speaker driver
 #define TLV320DAC3101_spkr_drvr_reg 0x2B // Register 43 - Right class-D speaker driver
 
-// External LED GPIO
-#define EXTERNAL_LED_GPIO   11
-
 const char *command_SET_LED_RGB = "SET_LED_RGB";
 const char *command_SET_LED_HSV = "SET_LED_HSV";
 const char *command_SET_LED_HSL = "SET_LED_HSL";
