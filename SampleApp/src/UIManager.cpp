@@ -572,12 +572,14 @@ void UIManager::printState() {
                 ConsolePrinter::prettyPrint("Alexa is currently idle!");
 #ifdef PI_HAT_CTRL
                 system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_LED_RGB 19 23 3");
+    system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_GPIO 0 0");
 #endif
                 return;
             case DialogUXState::LISTENING:
                 ConsolePrinter::prettyPrint("Listening...");
 #ifdef PI_HAT_CTRL
                 system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_LED_RGB 1 15 22");
+                system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_GPIO 0 1");
 #endif
                 return;
             case DialogUXState::EXPECTING:
@@ -590,6 +592,7 @@ void UIManager::printState() {
                 ConsolePrinter::prettyPrint("Speaking...");
 #ifdef PI_HAT_CTRL
                 system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_LED_SPEAKING");
+                system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_GPIO 0 0");
 #endif
                 return;
             /*
@@ -665,6 +668,7 @@ UIManager::~UIManager() {
 #ifdef PI_HAT_CTRL
     //Turn LED off
     system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_LED_RGB 0 0 0");
+    system("/home/pi/sdk-folder/third-party/pi_hat_ctrl/pi_hat_ctrl SET_GPIO 0 0");
 #endif
 }
 
