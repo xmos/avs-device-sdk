@@ -71,7 +71,8 @@ public:
         std::shared_ptr<alexaClientSDK::sampleApp::ConsoleReader> consoleReader,
         const std::vector<std::string>& configFiles,
         const std::string& pathToInputFolder,
-        const std::string& logLevel = "");
+        const std::string& logLevel = "",
+        const int opPoint = 5);
 
     /**
      * Runs the application, blocking until the user asks the application to quit or a device reset is triggered.
@@ -146,7 +147,8 @@ private:
         std::shared_ptr<alexaClientSDK::sampleApp::ConsoleReader> consoleReader,
         const std::vector<std::string>& configFiles,
         const std::string& pathToInputFolder,
-        const std::string& logLevel);
+        const std::string& logLevel,
+        const int opPoint);
 
     /**
      * Create an application media player.
