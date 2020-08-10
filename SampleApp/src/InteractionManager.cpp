@@ -43,14 +43,20 @@ InteractionManager::InteractionManager(
         m_isHoldOccurring{false},
         m_isTapOccurring{false},
         m_isMicOn{true} {
-    m_micWrapper->startStreamingMicrophoneData();
+    //m_micWrapper->startStreamingMicrophoneData();
 };
+#include <unistd.h>
 
 void InteractionManager::begin() {
     m_executor.submit([this]() {
         m_userInterface->printWelcomeScreen();
         m_userInterface->printHelpScreen();
     });
+    while (m_userInterface->getConnectionStatus() != avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status::CONNECTED) {
+        usleep(50000);
+    }
+    sleep(2);
+    m_micWrapper->startStreamingMicrophoneData();
 }
 
 void InteractionManager::help() {
