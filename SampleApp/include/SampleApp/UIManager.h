@@ -179,6 +179,9 @@ public:
      */
     void printCommsNotSupported();
 
+    /**
+     *  Return connection status
+     */
     avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status getConnectionStatus() {
         return m_connectionStatus;
     } 
