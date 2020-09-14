@@ -304,16 +304,6 @@ bool SensoryKeywordDetector::setUpRuntimeSettings(SnsrSession* session) {
                         .d("error", getSensoryDetails(*session, result)));
         return false;
     }
-    
-    result = snsrSetInt(*session, SNSR_OPERATING_POINT, m_opPoint);
-    if (result != SNSR_RC_OK)
-    {
-        ACSDK_ERROR(LX("setUpRuntimeSettingsFailed")
-                        .d("reason", "setSnsrOperatingPointFailure")
-                        .d("error", getSensoryDetails(*session, result)));
-        return false;
-    }
-
 
     result = snsrSetInt(*session, SNSR_OPERATING_POINT, m_opPoint);
     if (result != SNSR_RC_OK)
