@@ -179,6 +179,12 @@ public:
      */
     void printCommsNotSupported();
 
+    /**
+     *  Return connection status
+     */
+    avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status getConnectionStatus() {
+        return m_connectionStatus;
+    } 
 private:
     /**
      * Prints the current state of Alexa after checking what the appropriate message to display is based on the current

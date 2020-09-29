@@ -43,7 +43,10 @@ InteractionManager::InteractionManager(
         m_isHoldOccurring{false},
         m_isTapOccurring{false},
         m_isMicOn{true} {
-    m_micWrapper->startStreamingMicrophoneData();
+
+    // Do not start streaming the audio now, the SDK is not ready to process the audio
+    // wait for the device to be authorized
+    //m_micWrapper->startStreamingMicrophoneData();
 };
 
 void InteractionManager::begin() {
@@ -51,6 +54,14 @@ void InteractionManager::begin() {
         m_userInterface->printWelcomeScreen();
         m_userInterface->printHelpScreen();
     });
+
+    // wait for the device to be authorized
+    while (m_userInterface->getConnectionStatus() != avsCommon::sdkInterfaces::ConnectionStatusObserverInterface::Status::CONNECTED) {
+        usleep(50000);
+    }
+    sleep(2);
+    // start streaming the audio
+    m_micWrapper->startStreamingMicrophoneData();
 }
 
 void InteractionManager::help() {
