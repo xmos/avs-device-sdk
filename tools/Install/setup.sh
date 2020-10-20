@@ -246,18 +246,21 @@ echo
 AUTOSTART_SESSION="avsrun"
 AUTOSTART_DIR=$HOME/.config/lxsession/LXDE-pi
 AUTOSTART=$AUTOSTART_DIR/autostart
-AVSRUN_CMD="$BUILD_PATH/SampleApp/src/SampleApp $OUTPUT_CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models NONE 12"
-
+AVSRUN_CMD="lxterminal -t avsrun -e \"$BUILD_PATH/SampleApp/src/SampleApp $OUTPUT_CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models NONE 12\" &"
+STARTUP_SCRIPT=$CURRENT_DIR/.avsrun-startup.sh
+OFFLINE_DEMO_SCRIPT=$HOME/vocalfusion_3510_sales_demo/run_demo.sh #TODO remove hardcoding
 if [ ! -f $AUTOSTART ]; then
     mkdir -p $AUTOSTART_DIR
     cp /etc/xdg/lxsession/LXDE-pi/autostart $AUTOSTART
 fi
-STARTUP_SCRIPT=$CURRENT_DIR/.avsrun-startup.sh
 cat << EOF > "$STARTUP_SCRIPT"
 #!/bin/bash
 $AVSRUN_CMD
-\$SHELL
 EOF
+#if vocalfusion_3510_sales_demo is present, modify STARTUP_SCRIPT to start sales demo along with AVS
+if grep "vocalfusion_3510_sales_demo" $AUTOSTART; then #vocalfusion_3510_sales_demo not present
+    echo "lxterminal -t offline_demo -e \"$OFFLINE_DEMO_SCRIPT --with-avs\" &" >> $STARTUP_SCRIPT
+fi
 chmod a+rx $STARTUP_SCRIPT
 while true; do
     read -p "Automatically run AVS SDK at startup (y/n)? " ANSWER
@@ -272,7 +275,7 @@ while true; do
             if ! grep $AUTOSTART_SESSION $AUTOSTART; then #avsrun not present
                 if ! grep "vocalfusion_3510_sales_demo" $AUTOSTART; then #vocalfusion_3510_sales_demo not present
                     # Append startup script if not already in autostart file
-                    echo "@lxterminal -t $AUTOSTART_SESSION --geometry=150x50 -e $STARTUP_SCRIPT" >> $AUTOSTART
+                    echo "@$STARTUP_SCRIPT" >> $AUTOSTART
                 fi
             else #avsrun present
                 if grep "vocalfusion_3510_sales_demo" $AUTOSTART ; then #vocalfusion_3510_sales_demo present
@@ -413,7 +416,7 @@ sed -i '/AVS/d' $ALIASES > /dev/null
 sed -i '/AlexaClientSDKConfig.json/d' $ALIASES > /dev/null
 sed -i '/Remove/d' $ALIASES > /dev/null
 
-echo "alias avsrun=\"$AVSRUN_CMD\"" >> $ALIASES
+echo "alias avsrun=\"$STARTUP_SCRIPT\"" >> $ALIASES
 echo "alias avsunit=\"bash $TEST_SCRIPT\"" >> $ALIASES
 echo "alias avssetup=\"cd $CURRENT_DIR; bash setup.sh\"" >> $ALIASES
 echo "echo "Available AVS aliases:"" >> $ALIASES
