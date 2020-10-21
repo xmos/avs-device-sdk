@@ -257,32 +257,40 @@ cat << EOF > "$STARTUP_SCRIPT"
 #!/bin/bash
 $AVSRUN_CMD
 EOF
+
 #if vocalfusion_3510_sales_demo is present, modify STARTUP_SCRIPT to start sales demo along with AVS
 if grep "vocalfusion_3510_sales_demo" $AUTOSTART; then #vocalfusion_3510_sales_demo not present
     echo "lxterminal -t offline_demo -e \"$OFFLINE_DEMO_SCRIPT --with-avs\" &" >> $STARTUP_SCRIPT
 fi
+
 chmod a+rx $STARTUP_SCRIPT
+
 while true; do
     read -p "Automatically run AVS SDK at startup (y/n)? " ANSWER
     case ${ANSWER} in
         n|N|no|NO )
-            if grep $AUTOSTART_SESSION $AUTOSTART; then
+            if grep $AUTOSTART_SESSION $AUTOSTART; then #TODO what happens if sales demo is present and user says No to running automatically at startup??
                 # Remove startup script from autostart file
                 sed -i '/'"$AUTOSTART_SESSION"'/d' $AUTOSTART
             fi
             break;;
         y|Y|yes|YES )
-            if ! grep $AUTOSTART_SESSION $AUTOSTART; then #avsrun not present
+            if ! grep "@$STARTUP_SCRIPT" $AUTOSTART; then #avsrun not present
                 if ! grep "vocalfusion_3510_sales_demo" $AUTOSTART; then #vocalfusion_3510_sales_demo not present
                     # Append startup script if not already in autostart file
                     echo "@$STARTUP_SCRIPT" >> $AUTOSTART
-                fi
-            else #avsrun present
-                if grep "vocalfusion_3510_sales_demo" $AUTOSTART ; then #vocalfusion_3510_sales_demo present
-                    # Remove startup script from autostart file
-                    echo "Warning: Not adding avsrun in autostart since offline demo is already present. Start AVS by following instructions on vocalfusion_3510_sales_demo startup"
-                    sed -i '/'"$AUTOSTART_SESSION"'/d' $AUTOSTART
-                fi
+	    	else #vocalfusion demo present and we're adding avs so append path .avsrun-startup.sh to the startup.py call in $AUTOSTART
+		    search_string="avsrun-startup-file"
+		    if ! grep $search_string $AUTOSTART; then
+			echo "--avsrun-startup-file NOT PRESENT"
+		   	#do this only once
+		    	line=$(grep "vocalfusion_3510_sales_demo" $AUTOSTART)
+		    	append_string="--avsrun-startup-file $STARTUP_SCRIPT"
+		    	line="${line} ${append_string}"
+                    	sed -i '/'"vocalfusion_3510_sales_demo"'/d' $AUTOSTART
+		    	echo "$line" >> $AUTOSTART
+		    fi
+		fi
             fi
             break;;
     esac
