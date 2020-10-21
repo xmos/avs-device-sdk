@@ -57,6 +57,9 @@ TEMP_CONFIG_FILE="$BUILD_PATH/Integration/tmp_AlexaClientSDKConfig.json"
 TEST_SCRIPT="$INSTALL_BASE/test.sh"
 LIB_SUFFIX="a"
 ANDROID_CONFIG_FILE=""
+PATH_FILES_DIR="$HOME/.config/"
+VOCALFUSION_3510_SALES_DEMO_PATH_FILE="$PATH_FILES_DIR/vocalfusion_3510_sales_demo_path"
+VOCALFUSION_3510_AVS_SETUP_PATH_FILE="$PATH_FILES_DIR/vocalfusion_3510_avs_setup_path"
 
 PI_HAT_CTRL_PATH="$THIRD_PARTY_PATH/pi_hat_ctrl"
 ALIASES="$HOME/.bash_aliases"
@@ -236,6 +239,10 @@ else
   exit 1
 fi
 
+echo
+echo "==============> CREATING FILE WITH AVS SETUP PATH ============"
+echo
+echo "$CURRENT_DIR" > $VOCALFUSION_3510_AVS_SETUP_PATH_FILE
 
 echo
 echo "==============> CREATING AUTOSTART SCRIPT ============"
@@ -248,7 +255,6 @@ AUTOSTART_DIR=$HOME/.config/lxsession/LXDE-pi
 AUTOSTART=$AUTOSTART_DIR/autostart
 AVSRUN_CMD="lxterminal -t avsrun -e \"$BUILD_PATH/SampleApp/src/SampleApp $OUTPUT_CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models NONE 12\" &"
 STARTUP_SCRIPT=$CURRENT_DIR/.avsrun-startup.sh
-OFFLINE_DEMO_SCRIPT=$HOME/vocalfusion_3510_sales_demo/run_demo.sh #TODO remove hardcoding
 if [ ! -f $AUTOSTART ]; then
     mkdir -p $AUTOSTART_DIR
     cp /etc/xdg/lxsession/LXDE-pi/autostart $AUTOSTART
@@ -258,9 +264,11 @@ cat << EOF > "$STARTUP_SCRIPT"
 $AVSRUN_CMD
 EOF
 
-#if vocalfusion_3510_sales_demo is present, modify STARTUP_SCRIPT to start sales demo along with AVS
-if grep "vocalfusion_3510_sales_demo" $AUTOSTART; then #vocalfusion_3510_sales_demo not present
-    echo "lxterminal -t offline_demo -e \"$OFFLINE_DEMO_SCRIPT --with-avs\" &" >> $STARTUP_SCRIPT
+#if vocalfusion_3510_sales_demo is present, modify .avsrun-startup.sh to start sales demo along with AVS
+if [ -f $VOCALFUSION_3510_SALES_DEMO_PATH_FILE ]; then
+    SALES_DEMO_PATH=`cat $VOCALFUSION_3510_SALES_DEMO_PATH_FILE`
+    sed -i '/'"offline_demo"'/d' $STARTUP_SCRIPT
+    echo "lxterminal -t offline_demo -e \"$SALES_DEMO_PATH/"run_demo.sh" --with-avs\" &" >> $STARTUP_SCRIPT
 fi
 
 chmod a+rx $STARTUP_SCRIPT
@@ -269,29 +277,24 @@ while true; do
     read -p "Automatically run AVS SDK at startup (y/n)? " ANSWER
     case ${ANSWER} in
         n|N|no|NO )
-            if grep $AUTOSTART_SESSION $AUTOSTART; then #TODO what happens if sales demo is present and user says No to running automatically at startup??
+            if grep $AUTOSTART_SESSION $AUTOSTART; then 
                 # Remove startup script from autostart file
                 sed -i '/'"$AUTOSTART_SESSION"'/d' $AUTOSTART
             fi
             break;;
         y|Y|yes|YES )
-            if ! grep "@$STARTUP_SCRIPT" $AUTOSTART; then #avsrun not present
-                if ! grep "vocalfusion_3510_sales_demo" $AUTOSTART; then #vocalfusion_3510_sales_demo not present
-                    # Append startup script if not already in autostart file
-                    echo "@$STARTUP_SCRIPT" >> $AUTOSTART
-	    	else #vocalfusion demo present and we're adding avs so append path .avsrun-startup.sh to the startup.py call in $AUTOSTART
-		    search_string="avsrun-startup-file"
-		    if ! grep $search_string $AUTOSTART; then
-			echo "--avsrun-startup-file NOT PRESENT"
-		   	#do this only once
-		    	line=$(grep "vocalfusion_3510_sales_demo" $AUTOSTART)
-		    	append_string="--avsrun-startup-file $STARTUP_SCRIPT"
-		    	line="${line} ${append_string}"
-                    	sed -i '/'"vocalfusion_3510_sales_demo"'/d' $AUTOSTART
-		    	echo "$line" >> $AUTOSTART
-		    fi
-		fi
-            fi
+	    if [ ! -f $VOCALFUSION_3510_SALES_DEMO_PATH_FILE ]; then #sales demo is not present
+	        #remove existing lines containing avs
+	        sed -i '/'"$AUTOSTART_SESSION"'/d' $AUTOSTART
+	        # Append avs startup script in autostart file
+	        echo "@$STARTUP_SCRIPT" >> $AUTOSTART
+	    else #vocalfusion demo present and we're adding avs so update the startup.py call in $AUTOSTART
+    		SALES_DEMO_PATH=`cat $VOCALFUSION_3510_SALES_DEMO_PATH_FILE`
+		sales_demo_startup_string="@lxterminal -t startup -e python3 $SALES_DEMO_PATH/startup.py --avsrun-startup-file $STARTUP_SCRIPT"
+		sed -i '/'"vocalfusion_3510_sales_demo"'/d' $AUTOSTART
+	        sed -i '/'"$AUTOSTART_SESSION"'/d' $AUTOSTART
+		echo "$sales_demo_startup_string" >> $AUTOSTART
+	    fi
             break;;
     esac
 done
