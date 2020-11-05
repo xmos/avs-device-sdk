@@ -119,12 +119,12 @@ InteractionManager::InteractionManager(
 #endif
         m_diagnostics{diagnostics} {
 
-        // this flag is set to true only if XMOS_AVS_TESTS is defined
+        // this flag is used only if XMOS_AVS_TESTS is defined
         bool skipStreaming = false;
 #ifdef XMOS_AVS_TESTS
         // Do not start streaming the audio now, the SDK is not ready to process the audio:
         // wait for the device to be authorized
-        if (!m_isFileStream) {
+        if (m_isFileStream) {
             skipStreaming = true;
         }
 #endif
