@@ -57,6 +57,9 @@ TEMP_CONFIG_FILE="$BUILD_PATH/Integration/tmp_AlexaClientSDKConfig.json"
 TEST_SCRIPT="$INSTALL_BASE/test.sh"
 LIB_SUFFIX="a"
 ANDROID_CONFIG_FILE=""
+PATH_FILES_DIR="$HOME/.config/"
+VOCALFUSION_3510_SALES_DEMO_PATH_FILE="$PATH_FILES_DIR/vocalfusion_3510_sales_demo_path"
+VOCALFUSION_3510_AVS_SETUP_PATH_FILE="$PATH_FILES_DIR/vocalfusion_3510_avs_setup_path"
 
 PI_HAT_CTRL_PATH="$THIRD_PARTY_PATH/pi_hat_ctrl"
 ALIASES="$HOME/.bash_aliases"
@@ -236,6 +239,10 @@ else
   exit 1
 fi
 
+echo
+echo "==============> CREATING FILE WITH AVS SETUP PATH ============"
+echo
+echo "$CURRENT_DIR" > $VOCALFUSION_3510_AVS_SETUP_PATH_FILE
 
 echo
 echo "==============> CREATING AUTOSTART SCRIPT ============"
@@ -246,43 +253,52 @@ echo
 AUTOSTART_SESSION="avsrun"
 AUTOSTART_DIR=$HOME/.config/lxsession/LXDE-pi
 AUTOSTART=$AUTOSTART_DIR/autostart
-AVSRUN_CMD="$BUILD_PATH/SampleApp/src/SampleApp $OUTPUT_CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models NONE 12"
-
-if [ ! -f $AUTOSTART ]; then
-    mkdir -p $AUTOSTART_DIR
-    cp /etc/xdg/lxsession/LXDE-pi/autostart $AUTOSTART
-fi
+AVSRUN_CMD="lxterminal -t avsrun -e \"$BUILD_PATH/SampleApp/src/SampleApp $OUTPUT_CONFIG_FILE $THIRD_PARTY_PATH/alexa-rpi/models NONE 12 \$*\" &" #$* is for passing any extra arguments to Sampleapp through .avsrun-startup.sh shell script
 STARTUP_SCRIPT=$CURRENT_DIR/.avsrun-startup.sh
+if [ ! -f $AUTOSTART ]; then
+  mkdir -p $AUTOSTART_DIR
+  cp /etc/xdg/lxsession/LXDE-pi/autostart $AUTOSTART
+fi
 cat << EOF > "$STARTUP_SCRIPT"
 #!/bin/bash
 $AVSRUN_CMD
-\$SHELL
 EOF
+
+# If vocalfusion_3510_sales_demo is present, modify .avsrun-startup.sh to start sales demo along with AVS
+if [ -f $VOCALFUSION_3510_SALES_DEMO_PATH_FILE ]; then
+  SALES_DEMO_PATH=`cat $VOCALFUSION_3510_SALES_DEMO_PATH_FILE`
+  sed -i '/'"offline_demo"'/d' $STARTUP_SCRIPT
+  echo "lxterminal -t offline_demo -e \"$SALES_DEMO_PATH/"run_demo.sh" --with-avs\" &" >> $STARTUP_SCRIPT
+fi
+
 chmod a+rx $STARTUP_SCRIPT
+
 while true; do
-    read -p "Automatically run AVS SDK at startup (y/n)? " ANSWER
-    case ${ANSWER} in
-        n|N|no|NO )
-            if grep $AUTOSTART_SESSION $AUTOSTART; then
-                # Remove startup script from autostart file
-                sed -i '/'"$AUTOSTART_SESSION"'/d' $AUTOSTART
-            fi
-            break;;
-        y|Y|yes|YES )
-            if ! grep $AUTOSTART_SESSION $AUTOSTART; then #avsrun not present
-                if ! grep "vocalfusion_3510_sales_demo" $AUTOSTART; then #vocalfusion_3510_sales_demo not present
-                    # Append startup script if not already in autostart file
-                    echo "@lxterminal -t $AUTOSTART_SESSION --geometry=150x50 -e $STARTUP_SCRIPT" >> $AUTOSTART
-                fi
-            else #avsrun present
-                if grep "vocalfusion_3510_sales_demo" $AUTOSTART ; then #vocalfusion_3510_sales_demo present
-                    # Remove startup script from autostart file
-                    echo "Warning: Not adding avsrun in autostart since offline demo is already present. Start AVS by following instructions on vocalfusion_3510_sales_demo startup"
-                    sed -i '/'"$AUTOSTART_SESSION"'/d' $AUTOSTART
-                fi
-            fi
-            break;;
-    esac
+  read -p "Automatically run AVS SDK at startup (y/n)? " ANSWER
+  case ${ANSWER:0:1} in
+    N|n )
+      if grep $AUTOSTART_SESSION $AUTOSTART; then 
+        # Remove startup script from autostart file
+        sed -i '/'"$AUTOSTART_SESSION"'/d' $AUTOSTART
+      fi
+      break
+      ;;
+    Y|y )
+      if [ ! -f $VOCALFUSION_3510_SALES_DEMO_PATH_FILE ]; then # Sales demo is not present
+        # Remove existing lines containing avs
+        sed -i '/'"$AUTOSTART_SESSION"'/d' $AUTOSTART
+        # Append avs startup script in autostart file
+        echo "@$STARTUP_SCRIPT" >> $AUTOSTART
+      else # Vocalfusion demo present and we're adding avs so update the startup.py call in $AUTOSTART
+        SALES_DEMO_PATH=`cat $VOCALFUSION_3510_SALES_DEMO_PATH_FILE`
+        sales_demo_startup_string="@lxterminal -t startup -e python3 $SALES_DEMO_PATH/startup.py --avsrun-startup-file $STARTUP_SCRIPT"
+        sed -i '/'"vocalfusion_3510_sales_demo"'/d' $AUTOSTART
+        sed -i '/'"$AUTOSTART_SESSION"'/d' $AUTOSTART
+        echo "$sales_demo_startup_string" >> $AUTOSTART
+      fi
+      break
+      ;;
+  esac
 done
 
 SENSORY_OP_POINT_FLAG="-DSENSORY_OP_POINT=ON"
@@ -413,7 +429,7 @@ sed -i '/AVS/d' $ALIASES > /dev/null
 sed -i '/AlexaClientSDKConfig.json/d' $ALIASES > /dev/null
 sed -i '/Remove/d' $ALIASES > /dev/null
 
-echo "alias avsrun=\"$AVSRUN_CMD\"" >> $ALIASES
+echo "alias avsrun=\"$STARTUP_SCRIPT\"" >> $ALIASES
 echo "alias avsunit=\"bash $TEST_SCRIPT\"" >> $ALIASES
 echo "alias avssetup=\"cd $CURRENT_DIR; bash setup.sh\"" >> $ALIASES
 echo "echo "Available AVS aliases:"" >> $ALIASES
