@@ -368,11 +368,15 @@ then
       "${CMAKE_PLATFORM_SPECIFIC[@]}"
 
   cd $BUILD_PATH
+# remove -j2 option to allow building in Raspberry Pi3
   make SampleApp
+  make PreviewAlexaClient
 
 else
   cd $BUILD_PATH
+# remove -j2 option to allow building in Raspberry Pi3
   make SampleApp
+  make PreviewAlexaClient
 fi
 
 echo
