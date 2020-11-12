@@ -433,9 +433,8 @@ sed -i '/AlexaClientSDKConfig.json/d' $ALIASES > /dev/null
 sed -i '/Remove/d' $ALIASES > /dev/null
 
 echo "alias avsrun=\"$STARTUP_SCRIPT\"" >> $ALIASES
-echo "alias avsunit=\"bash $TEST_SCRIPT\"" >> $ALIASES
 echo "echo \"Available AVS aliases: \"" >> $ALIASES
-echo "echo \"avsrun, avsunit, avsauth\"" >> $ALIASES
+echo "echo \"avsrun \"" >> $ALIASES
 echo "echo \"If authentication fails, please check $BUILD_PATH/Integration/AlexaClientSDKConfig.json\"" >> $ALIASES
 echo "echo \"Remove .bash_aliases and open a new terminal to remove bindings\"" >> $ALIASES
 
