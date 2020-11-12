@@ -17,10 +17,12 @@ Feature enhancements, updates, and resolved issues from all releases are availab
 ### Get Started
 
 You can set up the SDK on the Raspberry Pi following these instructions:
-* [Raspberry Pi](https://github.com/alexa/avs-device-sdk/wiki/Raspberry-Pi-Quick-Start-Guide-with-Script) (Raspbian Stretch)
+* [Raspberry Pi](https://developer.amazon.com/en-GB/docs/alexa/alexa-voice-service/set-up-raspberry-pi.html)
 
 You can also prototype with a third party development kit:
-* [XMOS VocalFusion 2-Mic (XVF3510) Dev Kit](https://github.com/xmos/vocalfusion-avs-setup) - Learn More [Here](https://www.xmos.com/xvf3510avs)
+* XMOS VocalFusion 2-Mic XVF3510 Dev Kit - Learn More [Here](https://www.xmos.ai/vocalfusion-voice-interfaces/)
+* XMOS VocalFusion 4-Mic XVF3500 Dev Kit - Learn More [Here](https://www.xmos.ai/vocalfusion-voice-interfaces/)
+* XMOS VocalFusion 4-Mic VF3000/3100 Dev Kit - Learn More [Here](https://www.xmos.ai/vocalfusion-conference-calling/)
 
 Or if you prefer, you can start with our [SDK API Documentation](https://alexa.github.io/avs-device-sdk/).
 
