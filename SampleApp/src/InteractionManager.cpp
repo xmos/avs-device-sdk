@@ -119,12 +119,12 @@ InteractionManager::InteractionManager(
 #endif
         m_diagnostics{diagnostics} {
 
-        // this flag is set to true only if XMOS_AVS_TESTS is defined
+        // this flag is used only if XMOS_AVS_TESTS is defined
         bool skipStreaming = false;
 #ifdef XMOS_AVS_TESTS
         // Do not start streaming the audio now, the SDK is not ready to process the audio:
         // wait for the device to be authorized
-        if (!m_isFileStream) {
+        if (m_isFileStream) {
             skipStreaming = true;
         }
 #endif
@@ -905,14 +905,6 @@ void InteractionManager::injectWavFile(const std::string& absoluteFilePath) {
             ACSDK_ERROR(LX("audioInjectionFailed").d("reason", "nullAudioInjector"));
             m_userInterface->printAudioInjectionFailureMessage();
             return;
-        }
-
-        // Notify DefaultClient of tap-to-talk if wakeword is disabled.
-        if (!m_wakeWordAudioProvider) {
-            if (!m_client->notifyOfTapToTalk(m_tapToTalkAudioProvider).get()) {
-                m_userInterface->printAudioInjectionFailureMessage();
-                return;
-            }
         }
 
         if (!audioInjector->injectAudio(absoluteFilePath)) {

@@ -26,6 +26,7 @@ fi
 
 SOUND_CONFIG="$HOME/.asoundrc"
 START_SCRIPT="$INSTALL_BASE/startsample.sh"
+START_PREVIEW_SCRIPT="$INSTALL_BASE/startpreview.sh"
 CMAKE_PLATFORM_SPECIFIC=(-DSENSORY_KEY_WORD_DETECTOR=ON \
     -DGSTREAMER_MEDIA_PLAYER=ON -DPORTAUDIO=ON \
     -DPORTAUDIO_LIB_PATH="$THIRD_PARTY_PATH/portaudio/lib/.libs/libportaudio.$LIB_SUFFIX" \
@@ -88,6 +89,12 @@ generate_start_script() {
 
   PA_ALSA_PLUGHW=1 ./SampleApp "$OUTPUT_CONFIG_FILE" "$THIRD_PARTY_PATH/alexa-rpi/models" DEBUG9
 EOF
+
+  cat << EOF > "$START_PREVIEW_SCRIPT"
+  cd "$BUILD_PATH/applications/acsdkPreviewAlexaClient/src"
+
+  PA_ALSA_PLUGHW=1 ./PreviewAlexaClient "$OUTPUT_CONFIG_FILE" "$THIRD_PARTY_PATH/alexa-rpi/models" DEBUG9
+EOF
 }
 
 generate_test_script() {
@@ -98,6 +105,6 @@ generate_test_script() {
   mkdir -p "$UNIT_TEST_MODEL_PATH"
   cp "$UNIT_TEST_MODEL" "$UNIT_TEST_MODEL_PATH"
   cd $BUILD_PATH
-  make all test -j2
+  make all test
 EOF
 }

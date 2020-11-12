@@ -302,13 +302,12 @@ while true; do
 done
 
 SENSORY_OP_POINT_FLAG="-DSENSORY_OP_POINT=ON"
+XMOS_AVS_TESTS_FLAG="-DXMOS_AVS_TESTS=ON"
 if [ $XMOS_DEVICE = "xvf3510" ]
 then
   PI_HAT_FLAG="-DPI_HAT_CTRL=ON"
-  XMOS_AVS_TESTS_FLAG="-DXMOS_AVS_TESTS=ON"
 else
   PI_HAT_FLAG=""
-  XMOS_AVS_TESTS_FLAG=""
 fi
 
 if [ ! -d "$BUILD_PATH" ]
@@ -368,11 +367,15 @@ then
       "${CMAKE_PLATFORM_SPECIFIC[@]}"
 
   cd $BUILD_PATH
+# remove -j2 option to allow building in Raspberry Pi3
   make SampleApp
+  make PreviewAlexaClient
 
 else
   cd $BUILD_PATH
+# remove -j2 option to allow building in Raspberry Pi3
   make SampleApp
+  make PreviewAlexaClient
 fi
 
 echo
@@ -430,11 +433,9 @@ sed -i '/AlexaClientSDKConfig.json/d' $ALIASES > /dev/null
 sed -i '/Remove/d' $ALIASES > /dev/null
 
 echo "alias avsrun=\"$STARTUP_SCRIPT\"" >> $ALIASES
-echo "alias avsunit=\"bash $TEST_SCRIPT\"" >> $ALIASES
-echo "alias avssetup=\"cd $CURRENT_DIR; bash setup.sh\"" >> $ALIASES
-echo "echo "Available AVS aliases:"" >> $ALIASES
-echo "echo -e "avsrun, avsunit, avssetup, avsauth"" >> $ALIASES
-echo "echo "If authentication fails, please check $BUILD_PATH/Integration/AlexaClientSDKConfig.json"" >> $ALIASES
-echo "echo "Remove .bash_aliases and open a new terminal to remove bindings"" >> $ALIASES
+echo "echo \"Available AVS aliases: \"" >> $ALIASES
+echo "echo \"avsrun \"" >> $ALIASES
+echo "echo \"If authentication fails, please check $BUILD_PATH/Integration/AlexaClientSDKConfig.json\"" >> $ALIASES
+echo "echo \"Remove .bash_aliases and open a new terminal to remove bindings\"" >> $ALIASES
 
 echo " **** Completed Configuration/Build ***"

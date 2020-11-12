@@ -38,6 +38,7 @@
 namespace alexaClientSDK {
 namespace mediaPlayer {
 
+using namespace alexaClientSDK::acsdkEqualizerInterfaces;
 using namespace avsCommon::avs::attachment;
 using namespace avsCommon::avs::speakerConstants;
 using namespace avsCommon::sdkInterfaces;
@@ -1996,14 +1997,14 @@ int MediaPlayer::clampEqualizerLevel(int level) {
     return std::min(std::max(level, MIN_EQUALIZER_LEVEL), MAX_EQUALIZER_LEVEL);
 }
 
-void MediaPlayer::setEqualizerBandLevels(audio::EqualizerBandLevelMap bandLevelMap) {
+void MediaPlayer::setEqualizerBandLevels(EqualizerBandLevelMap bandLevelMap) {
     if (!m_equalizerEnabled) {
         return;
     }
     std::promise<void> promise;
     auto future = promise.get_future();
     std::function<gboolean()> callback = [this, &promise, bandLevelMap]() {
-        auto it = bandLevelMap.find(audio::EqualizerBand::BASS);
+        auto it = bandLevelMap.find(EqualizerBand::BASS);
         if (bandLevelMap.end() != it) {
             g_object_set(
                 G_OBJECT(m_pipeline.equalizer),
@@ -2011,7 +2012,7 @@ void MediaPlayer::setEqualizerBandLevels(audio::EqualizerBandLevelMap bandLevelM
                 static_cast<gdouble>(clampEqualizerLevel(it->second)),
                 NULL);
         }
-        it = bandLevelMap.find(audio::EqualizerBand::MIDRANGE);
+        it = bandLevelMap.find(EqualizerBand::MIDRANGE);
         if (bandLevelMap.end() != it) {
             g_object_set(
                 G_OBJECT(m_pipeline.equalizer),
@@ -2019,7 +2020,7 @@ void MediaPlayer::setEqualizerBandLevels(audio::EqualizerBandLevelMap bandLevelM
                 static_cast<gdouble>(clampEqualizerLevel(it->second)),
                 NULL);
         }
-        it = bandLevelMap.find(audio::EqualizerBand::TREBLE);
+        it = bandLevelMap.find(EqualizerBand::TREBLE);
         if (bandLevelMap.end() != it) {
             g_object_set(
                 G_OBJECT(m_pipeline.equalizer),
