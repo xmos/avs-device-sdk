@@ -78,11 +78,7 @@ build_kwd_engine() {
   echo
 
   cd $THIRD_PARTY_PATH
-  rm -rf alexa-rpi
   git clone git://github.com/Sensory/alexa-rpi.git
-  pushd alexa-rpi > /dev/null
-  git checkout $SENSORY_MODEL_HASH -- models/spot-alexa-rpi-31000.snsr
-  popd > /dev/null
   bash ./alexa-rpi/bin/license.sh
 }
 
