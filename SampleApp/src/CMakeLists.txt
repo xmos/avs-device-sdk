@@ -55,14 +55,6 @@ if (ENDPOINT_CONTROLLERS_MODE_CONTROLLER)
     list(APPEND LibSampleApp_SOURCES DefaultEndpoint/DefaultEndpointModeControllerHandler.cpp)
 endif()
 
-if(SENSORY_OP_POINT)
-add_definitions(-DSENSORY_OP_POINT)
-endif()
-
-if(XMOS_AVS_TESTS)
-add_definitions(-DXMOS_AVS_TESTS)
-endif()
-
 if(EXTERNAL_MEDIA_ADAPTERS)
     list(APPEND LibSampleApp_SOURCES ${ALL_EMP_ADAPTER_REGISTRATION_FILES})
 endif ()

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
@@ -28,6 +28,10 @@ CLONE_URL=${CLONE_URL:- 'https://github.com/xmos/avs-device-sdk.git'}
 PORT_AUDIO_FILE="pa_stable_v190600_20161030.tgz"
 PORT_AUDIO_DOWNLOAD_URL="http://www.portaudio.com/archives/$PORT_AUDIO_FILE"
 
+CURL_VER=7.67.0
+CURL_DOWNLOAD_URL="https://github.com/curl/curl/releases/download/curl-7_67_0/curl-${CURL_VER}.tar.gz"
+
+TEST_MODEL_DOWNLOAD="https://github.com/Sensory/alexa-rpi/blob/master/models/spot-alexa-rpi-31000.snsr"
 
 BUILD_TESTS=${BUILD_TESTS:-'true'}
 
@@ -367,15 +371,13 @@ then
       "${CMAKE_PLATFORM_SPECIFIC[@]}"
 
   cd $BUILD_PATH
-# remove -j2 option to allow building in Raspberry Pi3
-  make SampleApp
-  make PreviewAlexaClient
+  make SampleApp -j2
+  make PreviewAlexaClient -j2
 
 else
   cd $BUILD_PATH
-# remove -j2 option to allow building in Raspberry Pi3
-  make SampleApp
-  make PreviewAlexaClient
+  make SampleApp -j2
+  make PreviewAlexaClient -j2
 fi
 
 echo

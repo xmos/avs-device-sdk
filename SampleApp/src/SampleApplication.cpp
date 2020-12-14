@@ -384,6 +384,7 @@ struct CapabilityResources {
     std::vector<FriendlyName> friendlyNames;
 };
 
+#ifdef RANGE_CONTROLLER
 /// This struct represents the Range Controller preset and its friendly names.
 struct RangeControllerPresetResources {
     /// The value of a preset.
@@ -392,7 +393,9 @@ struct RangeControllerPresetResources {
     /// The friendly names of the presets.
     std::vector<FriendlyName> friendlyNames;
 };
+#endif
 
+#ifdef MODE_CONTROLLER
 /// This struct represents the Mode Controller modes and its friendly names.
 struct ModeControllerModeResources {
     /// The mode in the Mode Controller.
@@ -401,7 +404,7 @@ struct ModeControllerModeResources {
     /// The friendly names of the @c mode.
     std::vector<FriendlyName> friendlyNames;
 };
-
+#endif
 #endif
 
 /**
@@ -810,10 +813,10 @@ bool SampleApplication::initialize(
         configJsonStreams->push_back(configInFile);
     }
 
-    bool enableDucking = true;
-
 #ifdef DISABLE_DUCKING
-    enableDucking = false;
+    bool enableDucking = false;
+#else
+    bool enableDucking = true;
 #endif
 
     // Add the InterruptModel Configuration.
